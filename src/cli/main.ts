@@ -15,6 +15,9 @@ import {
   buildSummarizeDocsRequest,
   buildTraceFeatureRequest,
   describeError,
+  resolveAiConfig,
+  type AiConfig,
+  type AiReadiness,
   type AiRequest,
   type AiSettings,
   type KeyValueStore,
@@ -114,6 +117,10 @@ async function main(argv: string[]): Promise<number> {
       return path.resolve(root, file);
     };
     const runAi = async (request: AiRequest) => {
+      const readiness = await engine.createProvider().checkReadiness();
+      if (!readiness.ready) {
+        throw new FeatureInputError(readinessGuidance(readiness, engine.aiConfig()));
+      }
       process.stderr.write(`Asking ${engine.createProvider().displayName}…\n`);
       const { markdown } = await engine.runAi(request, controller.signal);
       process.stdout.write(markdown);
@@ -164,6 +171,33 @@ async function main(argv: string[]): Promise<number> {
     return 1;
   } finally {
     engine.dispose();
+  }
+}
+
+/** Turns a readiness failure into copy-paste next steps for the terminal. */
+function readinessGuidance(readiness: Exclude<AiReadiness, { ready: true }>, config: AiConfig): string {
+  // In online modes config.model is a hosted model; Ollama advice must name a local one.
+  const localModel = config.mode.startsWith('offline') ? config.model : resolveAiConfig({}).model;
+  const noModelHelp = [
+    'No local model? Either:',
+    `  • Install Ollama (https://ollama.com/download), then run: ollama pull ${localModel}`,
+    "  • Or use Gemini's free tier (key: https://aistudio.google.com/apikey):",
+    '      ATLAS_API_KEY=<your-key> atlas <command> --mode online-gemini',
+    'The index, stats, map and graph commands work without AI.',
+  ].join('\n');
+
+  switch (readiness.reason) {
+    case 'unreachable':
+      return config.mode.startsWith('offline') ? `${readiness.message}\n\n${noModelHelp}` : readiness.message;
+    case 'model-missing': {
+      const installed = readiness.availableModels ?? [];
+      return `${readiness.message}\nRun: ollama pull ${config.model}`
+        + (installed.length ? `\nOr use an installed one: --model ${installed[0]}  (installed: ${installed.join(', ')})` : '');
+    }
+    case 'missing-key':
+      return `${readiness.message}\n\n${noModelHelp}`;
+    default:
+      return readiness.message;
   }
 }
 

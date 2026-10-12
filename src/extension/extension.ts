@@ -5,6 +5,7 @@ import { AppearanceController } from './appearanceController';
 import { AtlasSession } from './atlasSession';
 import { AutoRefresh } from './autoRefresh';
 import { registerAiCommands } from './commands/aiCommands';
+import { registerAiSetupCommands } from './commands/aiSetup';
 import { registerAtlasCommands } from './commands/atlasCommands';
 import { registerSettingsCommands } from './commands/settingsCommands';
 import { createLogger, createSecretStore, createStateStore, readAiSettings } from './host/vscodePlatform';
@@ -55,6 +56,7 @@ export function activate(context: vscode.ExtensionContext): SandboxAtlasApi {
     vscode.window.createTreeView('sandboxAtlas.overview', { treeDataProvider: overview }),
     ...registerAtlasCommands(context, session, logChannel),
     ...registerAiCommands(session),
+    ...registerAiSetupCommands(session),
     ...registerSettingsCommands(session),
     vscode.workspace.onDidChangeWorkspaceFolders(() => void session.indexAll()),
   );

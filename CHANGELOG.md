@@ -8,6 +8,12 @@ All notable changes to Sandbox Atlas are documented here. The format follows
 First public release.
 
 ### Added
+- **Guided AI setup**: before an AI command runs, Sandbox Atlas checks the provider and fixes the
+  problem in place:
+  - No local model: set up Ollama, or use a free-tier Gemini key.
+  - Model not downloaded: download it, or pick an installed one.
+  - Missing or rejected key: enter a new one.
+  - Also available as **Set Up AI**, with the same guidance in the CLI.
 - **8 appearance modes**: Classic, Vibe Coder, Hacker, Soft, Midnight, Sunset, Blueprint and Zen.
   - **Select Mode** previews each mode live in open Atlas panels.
   - Visual effects (glow, scanlines, grid) honour reduced motion and high contrast.

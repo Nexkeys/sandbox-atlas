@@ -9,7 +9,7 @@ export * from './model';
 export * from './platform';
 
 export * from './ai/aiConfig';
-export { CancelledError, type AiProvider, type AiCompletionResult } from './ai/aiProvider';
+export { CancelledError, type AiCompletionResult, type AiProvider, type AiReadiness } from './ai/aiProvider';
 export { UsageLimitError, type DailyUsage } from './ai/usageLimiter';
 
 export * from './features/aiFeatures';

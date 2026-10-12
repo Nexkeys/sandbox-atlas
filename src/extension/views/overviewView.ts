@@ -120,7 +120,7 @@ export class OverviewProvider implements vscode.TreeDataProvider<OverviewItem>, 
         action('Project Map', 'map', 'sandboxAtlas.generateProjectMap'),
         action('Summarize Docs', 'book', 'sandboxAtlas.summarizeDocs'),
         action('Export ATLAS.md', 'export', 'sandboxAtlas.exportAtlasNotes'),
-        action('Test AI Connection', 'plug', 'sandboxAtlas.testConnection'),
+        action('Set Up / Check AI', 'wand', 'sandboxAtlas.setupAi'),
       ],
     });
 

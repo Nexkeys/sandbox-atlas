@@ -23,12 +23,29 @@ export interface AiCompletionResult {
   totalTokens: number;
 }
 
+/** Why the configured provider cannot answer yet, so hosts can offer the right fix. */
+export type AiReadiness =
+  | { ready: true }
+  | {
+    ready: false;
+    /**
+     * - `missing-key`: online provider without an API key
+     * - `unreachable`: server not running / no network
+     * - `model-missing`: local server is up but the model isn't installed
+     * - `rejected`: the provider refused the request (bad key, quota…)
+     */
+    reason: 'missing-key' | 'unreachable' | 'model-missing' | 'rejected';
+    message: string;
+    /** Models the local server does have (for `model-missing`). */
+    availableModels?: string[];
+  };
+
 export interface AiProvider {
   readonly mode: AiMode;
   /** e.g. "Ollama (qwen2.5-coder:3b)". */
   readonly displayName: string;
-  /** Quick reachability check (lists models). Resolves to an error message, or undefined when OK. */
-  checkConnection(): Promise<string | undefined>;
+  /** Fast check (≤5 s) that the provider can answer: key present, server reachable, model installed. */
+  checkReadiness(): Promise<AiReadiness>;
   completeChat(messages: AiChatMessage[], options?: AiCompletionOptions): Promise<AiCompletionResult>;
 }
 
@@ -69,16 +86,41 @@ class OpenAiCompatibleProvider implements AiProvider {
     this.displayName = `${this.label} (${config.model})`;
   }
 
-  async checkConnection(): Promise<string | undefined> {
+  async checkReadiness(): Promise<AiReadiness> {
+    let headers: Record<string, string>;
     try {
-      const response = await fetch(this.endpoint('/models'), {
-        headers: await this.headers(),
-        signal: AbortSignal.timeout(5000),
-      });
-      return response.ok ? undefined : `${this.label} returned HTTP ${response.status}. ${this.troubleshootingHint()}`;
+      headers = await this.headers();
     } catch (error) {
-      return this.toError(error, undefined).message;
+      return { ready: false, reason: 'missing-key', message: describe(error) };
     }
+
+    let response: Response;
+    try {
+      response = await fetch(this.endpoint('/models'), { headers, signal: AbortSignal.timeout(5000) });
+    } catch {
+      const where = isOnlineMode(this.config.mode) ? `${this.label} (${this.config.baseUrl})` : `${this.label} at ${this.config.baseUrl}`;
+      return { ready: false, reason: 'unreachable', message: `Could not reach ${where}. ${this.troubleshootingHint()}` };
+    }
+
+    if (!response.ok) {
+      const detail = response.status === 401 || response.status === 403 ? 'The API key was rejected.' : await readErrorBody(response);
+      return { ready: false, reason: 'rejected', message: `${this.label} returned HTTP ${response.status}. ${detail}` };
+    }
+
+    // Local servers list installed models; hosted catalogues use different ids, so only check locally.
+    if (!isOnlineMode(this.config.mode)) {
+      const models = await readModelIds(response);
+      if (models && !modelIsInstalled(this.config.model, models)) {
+        return {
+          ready: false,
+          reason: 'model-missing',
+          message: `${this.label} is running, but the model "${this.config.model}" isn't installed.`,
+          availableModels: models,
+        };
+      }
+    }
+
+    return { ready: true };
   }
 
   async completeChat(messages: AiChatMessage[], options: AiCompletionOptions = {}): Promise<AiCompletionResult> {
@@ -185,6 +227,24 @@ class MissingApiKeyError extends Error {
     super(missingApiKeyMessage(mode));
     this.name = 'MissingApiKeyError';
   }
+}
+
+async function readModelIds(response: Response): Promise<string[] | undefined> {
+  try {
+    const body = await response.json() as { data?: Array<{ id?: unknown }> };
+    return body.data?.map((model) => model.id).filter((id): id is string => typeof id === 'string');
+  } catch {
+    return undefined;
+  }
+}
+
+/** Ollama resolves "name" to "name:latest". */
+function modelIsInstalled(model: string, installed: string[]): boolean {
+  return installed.includes(model) || (!model.includes(':') && installed.includes(`${model}:latest`));
+}
+
+function describe(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 async function readErrorBody(response: Response): Promise<string> {

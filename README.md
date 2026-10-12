@@ -144,9 +144,27 @@ large files. Multi-root workspaces are supported.
 | Select AI Provider / Set AI API Key / Test AI Connection | Configure AI |
 | Toggle Ignored Files (This Session) | Temporarily include `.gitignore`d files |
 | Select Mode / Toggle Visual Effects | Change the look; preview modes live |
+| Set Up AI | Check the AI provider and fix what's missing (no model, no key, model not downloaded) |
 
 All commands are in the Command Palette under **Sandbox Atlas**. File commands are also in the
 Explorer and editor context menus.
+
+## No local model? It still works
+
+- **Without any AI:** indexing, the Atlas Map, the dependency graph, impact counts, the project
+  map and `ATLAS.md`, and all 8 modes need no model.
+- **For AI answers:** Trace Feature, Summarize Docs, Analyze Impact and Edit Plans need a model.
+  The first time you run one without a model, Sandbox Atlas walks you through it:
+
+| Situation | What Sandbox Atlas offers |
+| --- | --- |
+| Nothing installed | **Set Up Ollama** (opens the download, then pulls the model in a terminal) or **Use Gemini (free key)** |
+| Ollama running, model missing | **Download** the model, or **use a model you already have** |
+| Online provider, no key | **Enter API key**, or switch to a local model |
+| Key rejected | Enter a new key, or choose another provider |
+
+After the fix, your command continues. Run **Sandbox Atlas: Set Up AI** at any time to check.
+Sandbox Atlas never ships an API key: each user brings their own, so nobody pays for anyone else.
 
 ## AI providers
 
@@ -183,8 +201,9 @@ Ollama's default 4K window) and 8,000 for hosted models.
 - **Offline modes never use the network.** Online modes send only the context shown in each
   request to the provider you chose.
 - API keys are stored in VS Code **Secret Storage** (OS-encrypted), never in settings files.
-- **Untrusted workspaces:** a cloned repo cannot redirect requests through its own
-  `.vscode/settings.json`, because workspace-level `ai.baseUrl` and `ai.mode` are ignored.
+- **Untrusted workspaces:** a cloned repo cannot redirect requests or influence commands through
+  its own `.vscode/settings.json`, because workspace-level AI endpoint, provider and model
+  settings are ignored. Model names are also validated before they ever reach a terminal.
 - Webviews run under a strict Content Security Policy. AI output is rendered with raw HTML
   escaped and only http(s) links allowed, and link clicks are re-validated by the extension.
 - Mode effects stay inside Sandbox Atlas's own panels. It never patches VS Code's files, unlike

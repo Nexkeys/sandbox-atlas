@@ -7,6 +7,7 @@ import {
   type AiMode,
 } from '../../core';
 import type { AtlasSession } from '../atlasSession';
+import { ensureAiReady } from './aiSetup';
 
 const modeDetails: Record<AiMode, string> = {
   'offline-ollama': 'Local · free · private — requires Ollama running',
@@ -79,19 +80,7 @@ async function setApiKey(session: AtlasSession, preselected?: AiMode): Promise<v
 }
 
 async function testConnection(session: AtlasSession): Promise<void> {
-  const provider = session.engine.createProvider();
-  const problem = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: `Sandbox Atlas: Testing ${provider.displayName}…` },
-    () => provider.checkConnection(),
-  );
-
-  if (!problem) {
-    void vscode.window.showInformationMessage(`Sandbox Atlas: ${provider.displayName} is reachable.`);
-    return;
-  }
-
-  const selection = await vscode.window.showErrorMessage(`Sandbox Atlas: ${problem}`, 'Select AI Provider');
-  if (selection) {
-    void vscode.commands.executeCommand('sandboxAtlas.selectAiProvider');
+  if (await ensureAiReady(session)) {
+    void vscode.window.showInformationMessage(`Sandbox Atlas: ${session.engine.createProvider().displayName} is ready.`);
   }
 }

@@ -128,8 +128,10 @@ suite('Sandbox Atlas extension', () => {
       await assert.rejects(provider('online-openai', 'gpt-test').completeChat([{ role: 'user', content: 'x' }]), /Set AI API Key/);
     });
 
-    test('connection check reports reachability', async () => {
-      assert.strictEqual(await provider('offline-ollama', 'test-model').checkConnection(), undefined);
+    test('readiness check reaches the server', async () => {
+      // The mock lists no models, so readiness can't confirm the model: it reports the server as reachable.
+      const readiness = await provider('offline-ollama', 'test-model').checkReadiness();
+      assert.ok(readiness.ready || readiness.reason === 'model-missing', JSON.stringify(readiness));
     });
   });
 });

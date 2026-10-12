@@ -50,10 +50,12 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "In untrusted workspaces Sandbox Atlas ignores workspace-level AI endpoint and mode settings, so a cloned repository cannot redirect your code to another server.",
+      "description": "In untrusted workspaces Sandbox Atlas ignores workspace-level AI settings (endpoint, provider, models), so a cloned repository cannot redirect your code or influence commands.",
       "restrictedConfigurations": [
         "sandboxAtlas.ai.baseUrl",
-        "sandboxAtlas.ai.mode"
+        "sandboxAtlas.ai.mode",
+        "sandboxAtlas.ai.offlineModel",
+        "sandboxAtlas.ai.onlineModel"
       ]
     },
     "virtualWorkspaces": {
@@ -169,6 +171,12 @@
         "title": "Toggle Visual Effects",
         "category": "Sandbox Atlas",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "sandboxAtlas.setupAi",
+        "title": "Set Up AI",
+        "category": "Sandbox Atlas",
+        "icon": "$(wand)"
       },
       {
         "command": "sandboxAtlas.selectAiProvider",
@@ -497,12 +505,13 @@
           },
           {
             "id": "testConnection",
-            "title": "Check the connection",
-            "description": "Make sure Sandbox Atlas can reach your model.\n[Test AI Connection](command:sandboxAtlas.testConnection)",
+            "title": "Check your AI is ready",
+            "description": "No local model yet? Sandbox Atlas walks you through installing Ollama, downloading a model, or using a free-tier Gemini key.\n[Set Up AI](command:sandboxAtlas.setupAi)",
             "media": {
               "markdown": "media/walkthrough/connection.md"
             },
             "completionEvents": [
+              "onCommand:sandboxAtlas.setupAi",
               "onCommand:sandboxAtlas.testConnection"
             ]
           },

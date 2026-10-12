@@ -27,7 +27,7 @@ function fakeProvider(mode: AiProvider['mode'] = 'offline-ollama'): AiProvider &
     mode,
     displayName: 'Fake (test)',
     calls: 0,
-    checkConnection: async () => undefined,
+    checkReadiness: async () => ({ ready: true }),
     async completeChat(messages) {
       this.calls += 1;
       return { content: `answer to ${messages.length} messages`, model: 'test', provider: 'Fake (test)', promptTokens: 10, completionTokens: 5, totalTokens: 15 };

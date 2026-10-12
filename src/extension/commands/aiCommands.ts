@@ -10,6 +10,7 @@ import {
   type AiRequest,
 } from '../../core';
 import type { AtlasSession } from '../atlasSession';
+import { ensureAiReady } from './aiSetup';
 import { resolveRoot } from '../host/workspaceRoots';
 import { presentResult, resolveTargetFile, uriFromArgument, withCancellableProgress } from '../ui/interaction';
 
@@ -93,9 +94,10 @@ async function generateEditPlan(session: AtlasSession, uri: vscode.Uri | undefin
   ));
 }
 
+/** Resolves the root, makes sure it is indexed, and that an AI model can answer — before asking for input. */
 async function prepareRoot(session: AtlasSession, uri?: vscode.Uri): Promise<string | undefined> {
   const root = await resolveRoot(uri);
-  return root && await session.ensureIndexed(root) ? root : undefined;
+  return root && await session.ensureIndexed(root) && await ensureAiReady(session) ? root : undefined;
 }
 
 /** Shared flow: build the request, call the provider under a cancellable progress, render markdown. */
