@@ -1,44 +1,469 @@
 {
   "name": "sandbox-atlas",
   "displayName": "Sandbox Atlas",
-  "description": "Local-first codebase mapping with online and offline AI edit plans for vibe coders.",
-  "version": "0.0.1",
+  "description": "Map any codebase in seconds: dependency graph, impact analysis and AI edit plans. Local-first, works offline with Ollama.",
+  "version": "0.1.0",
+  "publisher": "nexkeys",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#0f172a",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nexkeys/sandbox-atlas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nexkeys/sandbox-atlas/issues"
+  },
+  "homepage": "https://github.com/Nexkeys/sandbox-atlas#readme",
   "engines": {
-    "vscode": "^1.120.0"
+    "vscode": "^1.101.0"
   },
   "categories": [
+    "AI",
+    "Visualization",
     "Other"
   ],
-  "activationEvents": [],
+  "keywords": [
+    "codebase map",
+    "dependency graph",
+    "impact analysis",
+    "architecture",
+    "ollama",
+    "offline ai",
+    "vibe coding",
+    "react"
+  ],
+  "pricing": "Free",
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In untrusted workspaces Sandbox Atlas ignores workspace-level AI endpoint and mode settings, so a cloned repository cannot redirect your code to another server.",
+      "restrictedConfigurations": [
+        "sandboxAtlas.ai.baseUrl",
+        "sandboxAtlas.ai.mode"
+      ]
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Sandbox Atlas indexes files from the local disk."
+    }
+  },
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sandboxAtlas",
+          "title": "Sandbox Atlas",
+          "icon": "media/activity-bar.svg"
+        }
+      ]
+    },
+    "views": {
+      "sandboxAtlas": [
+        {
+          "id": "sandboxAtlas.map",
+          "name": "Atlas Map",
+          "contextualTitle": "Sandbox Atlas"
+        },
+        {
+          "id": "sandboxAtlas.overview",
+          "name": "Overview",
+          "contextualTitle": "Sandbox Atlas"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "sandboxAtlas.map",
+        "contents": "Open a folder to map it with Sandbox Atlas.\n[Open Folder](command:workbench.action.files.openFolder)",
+        "when": "workbenchState == empty"
+      },
+      {
+        "view": "sandboxAtlas.map",
+        "contents": "Sandbox Atlas maps your code locally. Nothing leaves your machine unless you choose an online AI provider.\n[Scan Workspace](command:sandboxAtlas.scanWorkspace)\n[Get Started](command:sandboxAtlas.openWalkthrough)",
+        "when": "workbenchState != empty"
+      }
+    ],
     "commands": [
       {
-        "command": "sandbox-atlas.helloWorld",
-        "title": "Hello World"
+        "command": "sandboxAtlas.scanWorkspace",
+        "title": "Scan Workspace",
+        "category": "Sandbox Atlas",
+        "icon": "$(search-fuzzy)"
+      },
+      {
+        "command": "sandboxAtlas.refreshAtlas",
+        "title": "Refresh Atlas",
+        "category": "Sandbox Atlas",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sandboxAtlas.showGraph",
+        "title": "Show Dependency Graph",
+        "category": "Sandbox Atlas",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "sandboxAtlas.showGraphForFile",
+        "title": "Show Dependency Graph for File",
+        "category": "Sandbox Atlas",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "sandboxAtlas.generateProjectMap",
+        "title": "Generate Project Map",
+        "category": "Sandbox Atlas",
+        "icon": "$(map)"
+      },
+      {
+        "command": "sandboxAtlas.exportAtlasNotes",
+        "title": "Export Atlas Notes (ATLAS.md)",
+        "category": "Sandbox Atlas",
+        "icon": "$(export)"
+      },
+      {
+        "command": "sandboxAtlas.traceFeature",
+        "title": "Trace Feature",
+        "category": "Sandbox Atlas",
+        "icon": "$(search)"
+      },
+      {
+        "command": "sandboxAtlas.summarizeDocs",
+        "title": "Summarize Docs",
+        "category": "Sandbox Atlas",
+        "icon": "$(book)"
+      },
+      {
+        "command": "sandboxAtlas.analyzeImpact",
+        "title": "Analyze Impact",
+        "category": "Sandbox Atlas",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "sandboxAtlas.generateEditPlan",
+        "title": "Generate Edit Plan",
+        "category": "Sandbox Atlas",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "sandboxAtlas.selectAiProvider",
+        "title": "Select AI Provider",
+        "category": "Sandbox Atlas",
+        "icon": "$(hubot)"
+      },
+      {
+        "command": "sandboxAtlas.setApiKey",
+        "title": "Set AI API Key",
+        "category": "Sandbox Atlas",
+        "icon": "$(key)"
+      },
+      {
+        "command": "sandboxAtlas.testConnection",
+        "title": "Test AI Connection",
+        "category": "Sandbox Atlas",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "sandboxAtlas.allowIgnoredFiles",
+        "title": "Toggle Ignored Files (This Session)",
+        "category": "Sandbox Atlas",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "sandboxAtlas.showIndexStatus",
+        "title": "Show Index Status",
+        "category": "Sandbox Atlas",
+        "icon": "$(info)"
+      },
+      {
+        "command": "sandboxAtlas.showLogs",
+        "title": "Show Logs",
+        "category": "Sandbox Atlas",
+        "icon": "$(output)"
+      },
+      {
+        "command": "sandboxAtlas.openWalkthrough",
+        "title": "Get Started",
+        "category": "Sandbox Atlas",
+        "icon": "$(rocket)"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "sandboxAtlas.fileMenu",
+        "label": "Sandbox Atlas"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "sandboxAtlas.showGraph",
+          "when": "view == sandboxAtlas.map",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sandboxAtlas.generateProjectMap",
+          "when": "view == sandboxAtlas.map",
+          "group": "navigation@2"
+        },
+        {
+          "command": "sandboxAtlas.refreshAtlas",
+          "when": "view == sandboxAtlas.map",
+          "group": "navigation@3"
+        },
+        {
+          "command": "sandboxAtlas.exportAtlasNotes",
+          "when": "view == sandboxAtlas.map",
+          "group": "1_export"
+        },
+        {
+          "command": "sandboxAtlas.allowIgnoredFiles",
+          "when": "view == sandboxAtlas.map",
+          "group": "2_settings"
+        },
+        {
+          "command": "sandboxAtlas.selectAiProvider",
+          "when": "view == sandboxAtlas.overview",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sandboxAtlas.openWalkthrough",
+          "when": "view == sandboxAtlas.overview",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "sandboxAtlas.analyzeImpact",
+          "when": "view == sandboxAtlas.map && viewItem == atlasCodeFile",
+          "group": "inline@1"
+        },
+        {
+          "command": "sandboxAtlas.showGraphForFile",
+          "when": "view == sandboxAtlas.map && viewItem == atlasCodeFile",
+          "group": "inline@2"
+        },
+        {
+          "command": "sandboxAtlas.analyzeImpact",
+          "when": "view == sandboxAtlas.map && viewItem == atlasCodeFile",
+          "group": "1_atlas@1"
+        },
+        {
+          "command": "sandboxAtlas.generateEditPlan",
+          "when": "view == sandboxAtlas.map && viewItem == atlasCodeFile",
+          "group": "1_atlas@2"
+        },
+        {
+          "command": "sandboxAtlas.showGraphForFile",
+          "when": "view == sandboxAtlas.map && viewItem == atlasCodeFile",
+          "group": "1_atlas@3"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "sandboxAtlas.fileMenu",
+          "when": "resourceExtname =~ /^\\.(ts|tsx|js|jsx|mjs|cjs)$/",
+          "group": "7_modification@9"
+        }
+      ],
+      "editor/context": [
+        {
+          "submenu": "sandboxAtlas.fileMenu",
+          "when": "resourceExtname =~ /^\\.(ts|tsx|js|jsx|mjs|cjs)$/",
+          "group": "1_modification@9"
+        }
+      ],
+      "sandboxAtlas.fileMenu": [
+        {
+          "command": "sandboxAtlas.analyzeImpact",
+          "group": "1_ai@1"
+        },
+        {
+          "command": "sandboxAtlas.generateEditPlan",
+          "group": "1_ai@2"
+        },
+        {
+          "command": "sandboxAtlas.showGraphForFile",
+          "group": "2_map@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "sandboxAtlas.showGraphForFile",
+          "when": "editorIsOpen"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Sandbox Atlas",
+      "properties": {
+        "sandboxAtlas.ai.mode": {
+          "type": "string",
+          "default": "offline-ollama",
+          "enum": [
+            "offline-ollama",
+            "offline-lmstudio",
+            "online-gemini",
+            "online-openrouter",
+            "online-openai"
+          ],
+          "enumDescriptions": [
+            "Local Ollama server (default, free, private)",
+            "Local LM Studio server",
+            "Google Gemini (API key required)",
+            "OpenRouter (API key required)",
+            "OpenAI (API key required)"
+          ],
+          "markdownDescription": "Which AI provider powers Trace Feature, Summarize Docs, Analyze Impact and Edit Plans. Online modes send code context to that provider; set the key with **Sandbox Atlas: Set AI API Key**.",
+          "order": 0,
+          "tags": [
+            "usesOnlineServices"
+          ]
+        },
+        "sandboxAtlas.ai.offlineModel": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Model for offline modes. Empty uses `qwen2.5-coder:3b`.",
+          "order": 1
+        },
+        "sandboxAtlas.ai.onlineModel": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Model for online modes. Empty uses the provider default (`gemini-2.5-flash`, `gpt-4o-mini`, `mistralai/mistral-7b-instruct`).",
+          "order": 2,
+          "tags": [
+            "usesOnlineServices"
+          ]
+        },
+        "sandboxAtlas.ai.baseUrl": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "markdownDescription": "Override the OpenAI-compatible endpoint, e.g. `http://localhost:11435/v1`. Empty uses the default for the selected mode.",
+          "order": 3,
+          "tags": [
+            "usesOnlineServices"
+          ]
+        },
+        "sandboxAtlas.ai.requestTimeoutSeconds": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "markdownDescription": "Abort AI requests that take longer than this many seconds. `0` = automatic: 300 s for local models (CPU inference can be slow), 120 s for online providers.",
+          "order": 4
+        },
+        "sandboxAtlas.ai.dailyRequestLimit": {
+          "type": "number",
+          "default": 100,
+          "minimum": 0,
+          "markdownDescription": "Maximum AI requests per day for **online** providers (cost guard). `0` = unlimited. Offline usage is never limited.",
+          "order": 5
+        },
+        "sandboxAtlas.index.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Re-index changed files automatically when they are saved, created or deleted.",
+          "order": 10
+        }
+      }
+    },
+    "walkthroughs": [
+      {
+        "id": "gettingStarted",
+        "title": "Get started with Sandbox Atlas",
+        "description": "Map your codebase and ask it questions, offline or online.",
+        "steps": [
+          {
+            "id": "chooseProvider",
+            "title": "Choose your AI provider",
+            "description": "Run fully offline with **Ollama** or **LM Studio** (free, private), or use Gemini, OpenAI or OpenRouter with your own key.\n[Select AI Provider](command:sandboxAtlas.selectAiProvider)",
+            "media": {
+              "markdown": "media/walkthrough/provider.md"
+            },
+            "completionEvents": [
+              "onCommand:sandboxAtlas.selectAiProvider",
+              "onSettingChanged:sandboxAtlas.ai.mode"
+            ]
+          },
+          {
+            "id": "testConnection",
+            "title": "Check the connection",
+            "description": "Make sure Sandbox Atlas can reach your model.\n[Test AI Connection](command:sandboxAtlas.testConnection)",
+            "media": {
+              "markdown": "media/walkthrough/connection.md"
+            },
+            "completionEvents": [
+              "onCommand:sandboxAtlas.testConnection"
+            ]
+          },
+          {
+            "id": "exploreMap",
+            "title": "Explore your Atlas",
+            "description": "Your workspace is indexed automatically. Browse the **Atlas Map**, or open the interactive dependency graph.\n[Show Dependency Graph](command:sandboxAtlas.showGraph)",
+            "media": {
+              "image": "media/screenshots/graph.png",
+              "altText": "Atlas dependency graph"
+            },
+            "completionEvents": [
+              "onCommand:sandboxAtlas.showGraph",
+              "onView:sandboxAtlas.map"
+            ]
+          },
+          {
+            "id": "askAtlas",
+            "title": "Ask where a feature lives",
+            "description": "Trace a feature, analyze the impact of changing a file, or get a step-by-step edit plan.\n[Trace a Feature](command:sandboxAtlas.traceFeature)",
+            "media": {
+              "image": "media/screenshots/trace.png",
+              "altText": "Feature trace answered by a local Ollama model"
+            },
+            "completionEvents": [
+              "onCommand:sandboxAtlas.traceFeature",
+              "onCommand:sandboxAtlas.analyzeImpact",
+              "onCommand:sandboxAtlas.generateEditPlan"
+            ]
+          }
+        ]
       }
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "vscode:prepublish": "npm run build:production",
+    "build": "node esbuild.js",
+    "build:production": "node esbuild.js --production",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "check-types": "tsc --noEmit",
+    "check-types": "tsc --noEmit && tsc --noEmit -p src/webview",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "verify": "npm run check-types && npm run lint && npm run test:unit",
+    "compile-tests": "tsc -p . --outDir out",
+    "pretest:unit": "npm run compile-tests",
+    "test:unit": "mocha --ui tdd --timeout 60000 \"out/test/unit/**/*.test.js\"",
+    "pretest": "npm run compile-tests && npm run build",
+    "test": "vscode-test",
+    "package": "vsce package --no-dependencies",
+    "publish:vsce": "vsce publish --no-dependencies",
+    "publish:ovsx": "npx --yes ovsx publish --no-dependencies",
+    "cli": "node dist/cli.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
-    "@types/vscode": "^1.120.0",
+    "@types/node": "^22.19.19",
+    "@types/vscode": "1.101.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.27.3",
     "eslint": "^9.39.3",
     "npm-run-all": "^4.1.5",
@@ -46,8 +471,7 @@
     "typescript-eslint": "^8.56.1"
   },
   "dependencies": {
-    "@vscode/ripgrep": "^1.18.0",
-    "better-sqlite3": "^12.10.0",
+    "cytoscape": "^3.34.3",
     "ignore": "^7.0.5",
     "marked": "^18.0.4",
     "ts-morph": "^28.0.0"

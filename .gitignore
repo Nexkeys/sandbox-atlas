@@ -1,6 +1,18 @@
-out
-dist
-node_modules
-.vscode-test/
+# Build output
+dist/
+out/
 *.vsix
+
+# Dependencies and test downloads
+node_modules/
+.vscode-test/
+
+# Secrets — never commit
 .env
+.env.*
+
+# Local databases and OS noise
+*.sqlite
+*.sqlite-*
+.DS_Store
+Thumbs.db

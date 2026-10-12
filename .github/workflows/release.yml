@@ -1,0 +1,45 @@
+name: Release
+
+# Push a tag like v0.1.0 to publish. Requires repository secrets:
+#   VSCE_PAT  — Azure DevOps token with Marketplace "Manage" scope (or switch to --azure-credential)
+#   OVSX_PAT  — Open VSX access token (publishes for Cursor, Windsurf, VSCodium)
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run verify
+      - run: xvfb-run -a npm test
+
+      - name: Package
+        run: npm run package
+
+      - name: Publish to VS Code Marketplace
+        run: npx vsce publish --no-dependencies --packagePath *.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX
+        run: npx --yes ovsx publish *.vsix
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+      - name: Attach VSIX to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: '*.vsix'
+          generate_release_notes: true

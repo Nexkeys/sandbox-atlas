@@ -1,14 +1,16 @@
-.vscode/**
-.vscode-test/**
-out/**
-node_modules/**
-src/**
-.gitignore
-.yarnrc
-esbuild.js
-vsc-extension-quickstart.md
-**/tsconfig.json
-**/eslint.config.mjs
-**/*.map
-**/*.ts
-**/.vscode-test.*
+# Allowlist: exclude everything, then include only what the extension needs at runtime.
+# (vsce always adds package.json, README.md, CHANGELOG.md and LICENSE.)
+**
+!dist/extension.js
+!dist/webview/graph.js
+!dist/webview/graph.css
+!media/icon.png
+!media/activity-bar.svg
+!media/graph-tab.svg
+!media/walkthrough/**
+!media/screenshots/graph.png
+!media/screenshots/trace.png
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
