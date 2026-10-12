@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import { describeError, type AtlasEngine, type IndexResult, type IndexStatus } from '../core';
+import type { AppearanceController } from './appearanceController';
 import { workspaceRoots } from './host/workspaceRoots';
 
 /**
  * VS Code-side state around the engine: which roots to index, the session-only
- * "include ignored files" switch, and a single change event that views listen to.
+ * "include ignored files" switch, the appearance mode, and one change event views listen to.
  */
 export class AtlasSession implements vscode.Disposable {
   private includeIgnored = false;
@@ -14,10 +15,15 @@ export class AtlasSession implements vscode.Disposable {
   /** Fires when index status, settings, or usage change; views re-render. */
   readonly onDidChange = this.changeEmitter.event;
 
-  constructor(readonly engine: AtlasEngine) {
+  constructor(
+    readonly engine: AtlasEngine,
+    readonly appearance: AppearanceController,
+    readonly extensionUri: vscode.Uri,
+  ) {
     const statusSubscription = engine.indexer.onDidChangeStatus(() => this.changeEmitter.fire());
     this.subscriptions.push(
       { dispose: () => statusSubscription.dispose() },
+      appearance.onDidChange(() => this.changeEmitter.fire()),
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration('sandboxAtlas')) {
           this.changeEmitter.fire();

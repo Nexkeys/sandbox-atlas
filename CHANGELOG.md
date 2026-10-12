@@ -8,6 +8,14 @@ All notable changes to Sandbox Atlas are documented here. The format follows
 First public release.
 
 ### Added
+- **8 appearance modes**: Classic, Vibe Coder, Hacker, Soft, Midnight, Sunset, Blueprint and Zen.
+  - **Select Mode** previews each mode live in open Atlas panels.
+  - Visual effects (glow, scanlines, grid) honour reduced motion and high contrast.
+  - Every palette is unit-tested for WCAG AA contrast.
+- **7 matching VS Code colour themes**, generated from the same mode definitions. Applying one is
+  opt-in (`sandboxAtlas.appearance.applyColorTheme`), and Classic restores your previous theme.
+- **Atlas Results** panel: themed AI answers and project maps with Copy, Open as Markdown and
+  Save. Untrusted markdown is rendered with raw HTML escaped and links allow-listed.
 - **Atlas Map** sidebar: indexed files with importer/import counts. Expand a file to see its
   components, hooks and functions; click to jump to the line.
 - **Overview** panel: index health, AI provider, today's usage and quick actions.

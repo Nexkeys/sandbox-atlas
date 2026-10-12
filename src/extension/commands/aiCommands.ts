@@ -11,7 +11,7 @@ import {
 } from '../../core';
 import type { AtlasSession } from '../atlasSession';
 import { resolveRoot } from '../host/workspaceRoots';
-import { resolveTargetFile, showMarkdown, uriFromArgument, withCancellableProgress } from '../ui/interaction';
+import { presentResult, resolveTargetFile, uriFromArgument, withCancellableProgress } from '../ui/interaction';
 
 export function registerAiCommands(session: AtlasSession): vscode.Disposable[] {
   return [
@@ -107,14 +107,15 @@ async function runAi(
 ): Promise<void> {
   const { engine } = session;
   try {
-    const markdown = await withCancellableProgress(`Sandbox Atlas: ${progressTitle}…`, async (signal) => {
+    const { title, result } = await withCancellableProgress(`Sandbox Atlas: ${progressTitle}…`, async (signal) => {
       const request = buildRequest(engine.aiConfig().contextTokenBudget);
-      const result = await engine.runAi(request, signal);
-      engine.logger.info(`${label}: ${result.completion.provider}, ${result.completion.totalTokens} tokens (today: ${result.usage.requests} requests).`);
-      return result.markdown;
+      const run = await engine.runAi(request, signal);
+      engine.logger.info(`${label}: ${run.completion.provider}, ${run.completion.totalTokens} tokens (today: ${run.usage.requests} requests).`);
+      return { title: request.title, result: run };
     });
     session.refreshViews();
-    await showMarkdown(markdown);
+    const subtitle = `${result.completion.provider} · ${result.completion.totalTokens.toLocaleString('en-US')} tokens`;
+    await presentResult(session, title, result.markdown, subtitle);
   } catch (error) {
     if (error instanceof CancelledError) {
       return;

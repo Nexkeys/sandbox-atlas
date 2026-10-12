@@ -46,12 +46,20 @@ suite('Sandbox Atlas extension', () => {
     assert.strictEqual(api.getIndexStatus(), 'ready');
   });
 
-  test('project map opens as a markdown preview', async () => {
+  test('project map opens in the themed results panel, and modes switch live', async () => {
     await vscode.commands.executeCommand('sandboxAtlas.generateProjectMap');
-    const markdown = vscode.workspace.textDocuments.find((document) => document.languageId === 'markdown' && document.isUntitled);
-    assert.ok(markdown, 'no project map document opened');
-    assert.match(markdown.getText(), /# Atlas: sample/);
-    assert.match(markdown.getText(), /`src\/greet\.ts` — imported by|greet\.ts/);
+    const tabs = () => vscode.window.tabGroups.all.flatMap((group) => group.tabs);
+    assert.ok(await waitFor(() => tabs().some((tab) => tab.label.startsWith('Project Map:'))), 'results panel missing');
+
+    const appearance = vscode.workspace.getConfiguration('sandboxAtlas.appearance');
+    await appearance.update('mode', 'hacker', vscode.ConfigurationTarget.Global);
+    assert.strictEqual(vscode.workspace.getConfiguration('sandboxAtlas.appearance').get('mode'), 'hacker');
+    await appearance.update('mode', undefined, vscode.ConfigurationTarget.Global);
+  });
+
+  test('contributes the seven matching colour themes', () => {
+    const themes = vscode.extensions.getExtension(extensionId)!.packageJSON.contributes.themes as Array<{ label: string }>;
+    assert.deepStrictEqual(themes.map((theme) => theme.label.replace('Sandbox Atlas ', '')), ['Vibe', 'Hacker', 'Soft', 'Midnight', 'Sunset', 'Blueprint', 'Zen']);
   });
 
   test('dependency graph panel opens', async () => {

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { buildProjectMap, type IndexStatus } from '../../core';
 import type { AtlasSession } from '../atlasSession';
 import { resolveRoot } from '../host/workspaceRoots';
-import { showMarkdown, uriFromArgument } from '../ui/interaction';
+import { presentResult, uriFromArgument } from '../ui/interaction';
 import { GraphPanel } from '../views/graphPanel';
 
 export function registerAtlasCommands(
@@ -54,7 +54,8 @@ async function refreshAtlas(session: AtlasSession): Promise<void> {
 async function generateProjectMap(session: AtlasSession): Promise<void> {
   const root = await resolveRoot();
   if (root && await session.ensureIndexed(root)) {
-    await showMarkdown(buildProjectMap(session.engine.store, root));
+    const stats = session.engine.store.getStats(root);
+    await presentResult(session, `Project Map: ${path.basename(root)}`, buildProjectMap(session.engine.store, root), `${stats.files} files indexed · no AI used`);
   }
 }
 

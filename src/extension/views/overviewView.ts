@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { isOnlineMode, type IndexStatus } from '../../core';
+import { atlasModes } from '../../shared/appearance';
 import type { AtlasSession } from '../atlasSession';
 import { workspaceRoots } from '../host/workspaceRoots';
 
@@ -84,6 +85,13 @@ export class OverviewProvider implements vscode.TreeDataProvider<OverviewItem>, 
         icon: isOnlineMode(config.mode) ? 'cloud' : 'vm',
         tooltip: 'Click to change the AI provider',
         command: { command: 'sandboxAtlas.selectAiProvider', title: 'Select AI Provider' },
+      },
+      {
+        label: 'Mode',
+        description: atlasModes[this.session.appearance.state.mode].label,
+        icon: atlasModes[this.session.appearance.state.mode].icon,
+        tooltip: 'Click to change how Sandbox Atlas looks',
+        command: { command: 'sandboxAtlas.selectMode', title: 'Select Mode' },
       },
       {
         label: 'Today',

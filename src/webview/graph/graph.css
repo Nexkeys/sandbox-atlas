@@ -1,35 +1,8 @@
-/* Atlas Graph — themed entirely from VS Code CSS variables. */
+/* Atlas Graph — styled entirely from --atlas-* mode tokens (see common/appearance.ts). */
+@import '../common/base.css';
 
-:root {
-  --gap: 8px;
-  --radius: 4px;
-  --surface: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-  --border: var(--vscode-editorWidget-border, var(--vscode-panel-border, transparent));
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html,
 body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
   overflow: hidden;
-  background: var(--vscode-editor-background);
-  color: var(--vscode-editor-foreground);
-  font-family: var(--vscode-font-family);
-  font-size: var(--vscode-font-size);
-}
-
-.muted {
-  color: var(--vscode-descriptionForeground);
-}
-
-.mono {
-  font-family: var(--vscode-editor-font-family);
-  font-size: 0.92em;
 }
 
 /* Toolbar */
@@ -42,21 +15,24 @@ body {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--gap);
+  gap: 8px;
   padding: 8px 12px;
-  background: var(--vscode-sideBar-background, var(--surface));
-  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--atlas-surface) 92%, transparent);
+  border-bottom: 1px solid var(--atlas-border);
+  backdrop-filter: blur(6px);
 }
 
 .title {
   display: flex;
   align-items: center;
-  gap: var(--gap);
+  gap: 8px;
   min-width: 0;
+  font-family: var(--atlas-font-display);
   font-weight: 600;
 }
 
 .title .muted {
+  font-family: var(--atlas-font-ui);
   font-weight: normal;
 }
 
@@ -68,57 +44,18 @@ body {
   background: conic-gradient(#4f8ef7 0 25%, #3fb68b 0 50%, #e5a33b 0 75%, #d96ba8 0);
 }
 
+body[data-glow] .logo {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--atlas-accent) 70%, transparent);
+}
+
 .controls {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-input,
-select,
-button {
-  height: 26px;
-  font: inherit;
-  color: var(--vscode-input-foreground);
-  background: var(--vscode-input-background);
-  border: 1px solid var(--vscode-input-border, var(--border));
-  border-radius: var(--radius);
-  padding: 0 8px;
-}
-
 input {
   width: 200px;
-}
-
-input:focus,
-select:focus,
-button:focus-visible {
-  outline: 1px solid var(--vscode-focusBorder);
-  outline-offset: -1px;
-}
-
-button {
-  cursor: pointer;
-  color: var(--vscode-button-secondaryForeground);
-  background: var(--vscode-button-secondaryBackground);
-  border-color: transparent;
-}
-
-button:hover {
-  background: var(--vscode-button-secondaryHoverBackground);
-}
-
-button.primary {
-  color: var(--vscode-button-foreground);
-  background: var(--vscode-button-background);
-}
-
-button.primary:hover {
-  background: var(--vscode-button-hoverBackground);
-}
-
-[hidden] {
-  display: none !important;
 }
 
 /* Graph canvas */
@@ -140,9 +77,6 @@ button.primary:hover {
   gap: 6px 12px;
   max-width: 55%;
   padding: 6px 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
   font-size: 0.92em;
 }
 
@@ -162,6 +96,10 @@ button.primary:hover {
   border-radius: 50%;
 }
 
+body[data-glow] .swatch {
+  box-shadow: 0 0 6px currentColor;
+}
+
 /* Details card */
 
 #details {
@@ -171,16 +109,14 @@ button.primary:hover {
   z-index: 2;
   width: 300px;
   padding: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 4px 16px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.3));
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
 }
 
 .details-title {
+  margin-bottom: 2px;
+  font-family: var(--atlas-font-display);
   font-size: 1.1em;
   font-weight: 600;
-  margin-bottom: 2px;
   overflow-wrap: anywhere;
 }
 
@@ -205,5 +141,5 @@ button.primary:hover {
   inset: 0;
   display: grid;
   place-items: center;
-  color: var(--vscode-descriptionForeground);
+  color: var(--atlas-muted);
 }

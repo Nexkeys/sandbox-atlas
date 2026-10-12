@@ -1,10 +1,25 @@
 import * as vscode from 'vscode';
 import type { AtlasEngine } from '../../core';
+import type { AtlasSession } from '../atlasSession';
+import { fileNameFor, ResultsPanel } from '../views/resultsPanel';
 
 /** Opens markdown in VS Code's preview beside the editor. Nothing is written to disk. */
 export async function showMarkdown(markdown: string): Promise<void> {
   const document = await vscode.workspace.openTextDocument({ content: markdown, language: 'markdown' });
   await vscode.commands.executeCommand('markdown.showPreviewToSide', document.uri);
+}
+
+/**
+ * Shows a markdown result where the user prefers: the themed Atlas Results panel (default)
+ * or VS Code's plain markdown preview.
+ */
+export async function presentResult(session: AtlasSession, title: string, markdown: string, subtitle?: string): Promise<void> {
+  const view = vscode.workspace.getConfiguration('sandboxAtlas.results').get<string>('view', 'panel');
+  if (view === 'markdown') {
+    await showMarkdown(markdown);
+    return;
+  }
+  await ResultsPanel.show(session.extensionUri, session.appearance, { title, subtitle, markdown, fileName: fileNameFor(title) });
 }
 
 /** Runs `task` under a cancellable notification; the AbortSignal fires on Cancel. */

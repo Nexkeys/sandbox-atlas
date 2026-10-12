@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { AtlasEngine, describeError, type IndexStatus } from '../core';
+import { AppearanceController } from './appearanceController';
 import { AtlasSession } from './atlasSession';
 import { AutoRefresh } from './autoRefresh';
 import { registerAiCommands } from './commands/aiCommands';
@@ -38,11 +39,13 @@ export function activate(context: vscode.ExtensionContext): SandboxAtlasApi {
     return { getIndexStatus: () => 'unavailable' };
   }
 
-  const session = new AtlasSession(engine);
+  const appearance = new AppearanceController(context.globalState);
+  const session = new AtlasSession(engine, appearance, context.extensionUri);
   const atlasMap = new AtlasMapProvider(session);
   const overview = new OverviewProvider(session);
 
   context.subscriptions.push(
+    appearance,
     session,
     atlasMap,
     overview,

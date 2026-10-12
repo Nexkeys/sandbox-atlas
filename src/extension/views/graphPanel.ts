@@ -1,8 +1,8 @@
-import { randomBytes } from 'crypto';
 import * as vscode from 'vscode';
 import { buildGraphData } from '../../core';
 import type { GraphToHostMessage, HostToGraphMessage } from '../../shared/graphProtocol';
 import type { AtlasSession } from '../atlasSession';
+import { webviewHtml, webviewOptions } from './webviewHtml';
 
 /**
  * Interactive dependency graph (Cytoscape.js in a webview). One panel is reused; it follows
@@ -22,10 +22,7 @@ export class GraphPanel implements vscode.Disposable {
       return;
     }
 
-    const panel = vscode.window.createWebviewPanel('sandboxAtlas.graph', 'Atlas Graph', vscode.ViewColumn.Active, {
-      enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview')],
-    });
+    const panel = vscode.window.createWebviewPanel('sandboxAtlas.graph', 'Atlas Graph', vscode.ViewColumn.Active, webviewOptions(context.extensionUri));
     GraphPanel.current = new GraphPanel(panel, context.extensionUri, session, root, focus);
   }
 
@@ -37,12 +34,13 @@ export class GraphPanel implements vscode.Disposable {
     private focus: string | undefined,
   ) {
     panel.iconPath = vscode.Uri.joinPath(extensionUri, 'media', 'graph-tab.svg');
-    panel.webview.html = renderHtml(panel.webview, extensionUri);
+    panel.webview.html = webviewHtml(panel.webview, extensionUri, 'graph', 'Atlas Graph');
 
     this.subscriptions.push(
       panel.onDidDispose(() => this.dispose()),
       panel.webview.onDidReceiveMessage((message: GraphToHostMessage) => this.onMessage(message)),
       session.onDidChange(() => this.scheduleRefresh()),
+      session.appearance.onDidChange((appearance) => this.post({ type: 'appearance', appearance })),
     );
   }
 
@@ -63,6 +61,7 @@ export class GraphPanel implements vscode.Disposable {
     switch (message.type) {
       case 'ready':
         this.webviewReady = true;
+        this.post({ type: 'appearance', appearance: this.session.appearance.state });
         this.postGraph();
         break;
       case 'open':
@@ -91,32 +90,10 @@ export class GraphPanel implements vscode.Disposable {
     }
     const data = buildGraphData(this.session.engine.store, this.root, { focus: this.focus });
     this.panel.title = this.focus ? `Atlas Graph: ${data.nodes.find((node) => node.isFocus)?.label ?? ''}` : `Atlas Graph: ${data.workspaceName}`;
-    const message: HostToGraphMessage = { type: 'graph', data };
+    this.post({ type: 'graph', data });
+  }
+
+  private post(message: HostToGraphMessage): void {
     void this.panel.webview.postMessage(message);
   }
-}
-
-function renderHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
-  const nonce = randomBytes(16).toString('base64');
-  const asset = (file: string) => webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'webview', file));
-  const csp = [
-    "default-src 'none'",
-    `style-src ${webview.cspSource}`,
-    `img-src ${webview.cspSource} data:`,
-    `script-src 'nonce-${nonce}'`,
-  ].join('; ');
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="${csp}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="${asset('graph.css')}">
-  <title>Atlas Graph</title>
-</head>
-<body>
-  <script nonce="${nonce}" src="${asset('graph.js')}"></script>
-</body>
-</html>`;
 }

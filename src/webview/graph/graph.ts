@@ -1,6 +1,8 @@
 import cytoscape, { type Core, type ElementDefinition, type LayoutOptions, type NodeSingular, type StylesheetJson } from 'cytoscape';
 import type { GraphData, GraphNode } from '../../core/model';
+import type { AppearanceState, AtlasMode } from '../../shared/appearance';
 import type { GraphToHostMessage, HostToGraphMessage } from '../../shared/graphProtocol';
+import { applyAppearance, nodeColors, token } from '../common/appearance';
 
 interface VsCodeApi {
   postMessage(message: GraphToHostMessage): void;
@@ -9,8 +11,6 @@ declare function acquireVsCodeApi(): VsCodeApi;
 
 const vscodeApi = acquireVsCodeApi();
 
-/** Categorical colours chosen to stay legible on light, dark and high-contrast themes. */
-const palette = ['#4f8ef7', '#e5a33b', '#3fb68b', '#d96ba8', '#8e7cf0', '#e36b5b', '#3bb3c3', '#a3b33b', '#c77d3b', '#7b8fa6'];
 
 // ── Static shell (no workspace data is ever inserted as HTML) ────────────────
 
@@ -18,7 +18,7 @@ document.body.innerHTML = `
   <header class="toolbar">
     <div class="title">
       <span class="logo" aria-hidden="true"></span>
-      <span id="title">Atlas Graph</span>
+      <span id="title" class="glow">Atlas Graph</span>
       <span id="stats" class="muted"></span>
     </div>
     <div class="controls">
@@ -33,8 +33,8 @@ document.body.innerHTML = `
     </div>
   </header>
   <main id="graph" aria-label="Dependency graph"></main>
-  <div id="legend" aria-label="Folders"></div>
-  <aside id="details" hidden>
+  <div id="legend" class="surface" aria-label="Folders"></div>
+  <aside id="details" class="surface" hidden>
     <div id="detailsTitle" class="details-title"></div>
     <div id="detailsPath" class="muted mono"></div>
     <div id="detailsStats" class="details-stats"></div>
@@ -54,22 +54,24 @@ const showAllButton = element<HTMLButtonElement>('showAll');
 const details = element<HTMLElement>('details');
 const empty = element<HTMLElement>('empty');
 
+const glowNodeLimit = 300;
+
 let cy: Core | undefined;
 let current: GraphData | undefined;
 let selected: GraphNode | undefined;
+let appearance: AppearanceState = { mode: 'classic', effects: true };
+let mode: AtlasMode = applyAppearance(appearance);
 const groupColors = new Map<string, string>();
 
 // ── Theme ────────────────────────────────────────────────────────────────────
 
-function themeColor(variable: string, fallback: string): string {
-  return getComputedStyle(document.body).getPropertyValue(variable).trim() || fallback;
-}
-
 function stylesheet(): StylesheetJson {
-  const foreground = themeColor('--vscode-editor-foreground', '#cccccc');
-  const muted = themeColor('--vscode-descriptionForeground', '#8b8b8b');
-  const focus = themeColor('--vscode-focusBorder', '#007fd4');
-  const background = themeColor('--vscode-editor-background', '#1e1e1e');
+  const foreground = token('--atlas-text', '#cccccc');
+  const edge = token('--atlas-edge', '#8b8b8b');
+  const focus = token('--atlas-focus', '#007fd4');
+  const background = token('--atlas-bg', '#1e1e1e');
+  // Underlay glow is drawn per node and defeats Cytoscape's fast paths; keep it to smaller graphs.
+  const glow = 'glow' in document.body.dataset && (current?.nodes.length ?? 0) <= glowNodeLimit;
 
   return [
     {
@@ -79,7 +81,7 @@ function stylesheet(): StylesheetJson {
         label: 'data(label)',
         color: foreground,
         'font-size': 11,
-        'font-family': themeColor('--vscode-font-family', 'sans-serif'),
+        'font-family': token('--atlas-font-ui', 'sans-serif'),
         'text-valign': 'bottom',
         'text-margin-y': 4,
         'text-outline-color': background,
@@ -88,23 +90,27 @@ function stylesheet(): StylesheetJson {
         width: 'data(size)',
         height: 'data(size)',
         'border-width': 0,
+        'underlay-color': 'data(color)',
+        'underlay-opacity': glow ? 0.35 : 0,
+        'underlay-padding': glow ? 7 : 0,
+        'underlay-shape': 'ellipse',
         'transition-property': 'opacity',
         'transition-duration': 150,
       },
     },
-    { selector: 'node[kind = "component"]', style: { shape: 'round-rectangle' } },
+    { selector: 'node[kind = "component"]', style: { shape: 'round-rectangle', 'underlay-shape': 'round-rectangle' } },
     { selector: 'node[?isFocus]', style: { 'border-width': 3, 'border-color': focus } },
     { selector: 'node:selected', style: { 'border-width': 3, 'border-color': focus } },
     {
       selector: 'edge',
       style: {
         width: 1.2,
-        'line-color': muted,
-        'target-arrow-color': muted,
+        'line-color': edge,
+        'target-arrow-color': edge,
         'target-arrow-shape': 'triangle',
         'arrow-scale': 0.8,
         'curve-style': 'bezier',
-        opacity: 0.45,
+        opacity: 0.5,
       },
     },
     { selector: 'edge.highlighted', style: { 'line-color': focus, 'target-arrow-color': focus, opacity: 1, width: 2 } },
@@ -112,12 +118,26 @@ function stylesheet(): StylesheetJson {
   ];
 }
 
-new MutationObserver(() => cy?.style(stylesheet())).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+/** Applies a mode and restyles the graph in place (no re-layout). */
+function setAppearance(state: AppearanceState): void {
+  appearance = state;
+  mode = applyAppearance(state);
+  groupColors.clear();
+  cy?.nodes().forEach((node) => {
+    node.data('color', colorFor(node.data('group') as string));
+  });
+  cy?.style(stylesheet());
+  renderLegend();
+}
+
+// High-contrast theme switches change body classes; re-apply so HC always gets Classic.
+new MutationObserver(() => setAppearance(appearance)).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
 // ── Rendering ────────────────────────────────────────────────────────────────
 
 function colorFor(group: string): string {
   if (!groupColors.has(group)) {
+    const palette = nodeColors(mode);
     groupColors.set(group, palette[groupColors.size % palette.length]);
   }
   return groupColors.get(group)!;
@@ -212,6 +232,7 @@ function render(data: GraphData): void {
 
   cy.elements().remove();
   cy.add(toElements(data));
+  cy.style(stylesheet());
   runLayout();
   applyFilter();
   renderLegend();
@@ -290,8 +311,11 @@ element('focusFile').addEventListener('click', () => selected && post({ type: 'f
 element('impactFile').addEventListener('click', () => selected && post({ type: 'analyzeImpact', path: selected.id }));
 
 window.addEventListener('message', (event: MessageEvent<HostToGraphMessage>) => {
-  if (event.data?.type === 'graph') {
-    render(event.data.data);
+  const message = event.data;
+  if (message?.type === 'graph') {
+    render(message.data);
+  } else if (message?.type === 'appearance') {
+    setAppearance(message.appearance);
   }
 });
 

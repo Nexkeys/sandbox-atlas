@@ -35,6 +35,37 @@ Your code stays on your machine unless you choose an online provider.
 | **Private by default** | Indexing, the map and the graph never use AI. Offline mode never touches the network. |
 | **Cost-safe** | Daily request cap for paid providers. Keys live in encrypted Secret Storage. |
 
+## Make it yours: 8 modes
+
+Run **Sandbox Atlas: Select Mode** and arrow through the list. Open Atlas panels **preview each mode live**.
+
+| Mode | Vibe |
+| --- | --- |
+| **Classic** | Native look; follows your VS Code theme |
+| **Vibe Coder** | Neon pink and violet gradients, glow, rounded everything |
+| **Hacker** | Terminal green on black, monospace, CRT scanlines |
+| **Soft** | Calm pastels on cream, gentle and rounded |
+| **Midnight** | Deep navy and moonlit blues for late sessions |
+| **Sunset** | Warm oranges and rose, golden-hour energy |
+| **Blueprint** | White ink on a cyan-blue engineering grid |
+| **Zen** | Ink on paper; minimal, serif, distraction-free |
+
+<img src="media/screenshots/modes.png" alt="The dependency graph in all eight modes" width="100%">
+
+What a mode changes:
+
+- **Panels:** the graph and results panels change palette, fonts, corner radius and effects.
+- **Status bar:** the icon changes to match.
+- **Editor theme (opt-in):** every mode except Classic ships a matching VS Code colour theme (*Sandbox Atlas Vibe*, *…Hacker* and so on). Sandbox Atlas asks before switching it, and choosing **Classic** restores your previous theme.
+
+Built to be comfortable, not just pretty:
+
+- Every palette is unit-tested against **WCAG AA contrast**.
+- Glow and scanlines turn off for **reduced motion** and on very large graphs.
+- **High-contrast** themes always use Classic.
+
+<img src="media/screenshots/results-modes.png" alt="An AI answer in the Atlas Results panel in Vibe Coder, Hacker, Soft and Zen modes" width="100%">
+
 ## Features
 
 ### 🗺️ Atlas Map and Overview
@@ -66,6 +97,9 @@ so you stay in control. You can also paste it into your AI editor.
 ### 🔎 Trace Feature and 📚 Summarize Docs
 Ask where "authentication" or "cart state" lives, or get a structured summary of your docs:
 overview, setup, architecture and entry points.
+
+Answers open in the themed **Atlas Results** panel, with Copy, Open as Markdown and Save. They
+can also go to VS Code's markdown preview (`sandboxAtlas.results.view`).
 
 <img src="media/screenshots/trace.png" alt="Feature trace answered by a local Ollama model" width="100%">
 
@@ -109,6 +143,7 @@ large files. Multi-root workspaces are supported.
 | Scan Workspace / Refresh Atlas | Index now (indexing is incremental) |
 | Select AI Provider / Set AI API Key / Test AI Connection | Configure AI |
 | Toggle Ignored Files (This Session) | Temporarily include `.gitignore`d files |
+| Select Mode / Toggle Visual Effects | Change the look; preview modes live |
 
 All commands are in the Command Palette under **Sandbox Atlas**. File commands are also in the
 Explorer and editor context menus.
@@ -136,6 +171,10 @@ Ollama's default 4K window) and 8,000 for hosted models.
 | `sandboxAtlas.ai.requestTimeoutSeconds` | `0` (auto: 300 s local, 120 s online) | Request timeout |
 | `sandboxAtlas.ai.dailyRequestLimit` | `100` | Daily cap for online providers (`0` = unlimited) |
 | `sandboxAtlas.index.autoRefresh` | `true` | Re-index on file changes |
+| `sandboxAtlas.appearance.mode` | `classic` | One of the 8 modes |
+| `sandboxAtlas.appearance.effects` | `true` | Glow and scanlines (always off for reduced motion) |
+| `sandboxAtlas.appearance.applyColorTheme` | `ask` | Also switch VS Code to the matching colour theme: `ask`, `always` or `never` |
+| `sandboxAtlas.results.view` | `panel` | Open results in the themed panel or the plain markdown preview |
 
 ## Privacy and security
 
@@ -146,7 +185,10 @@ Ollama's default 4K window) and 8,000 for hosted models.
 - API keys are stored in VS Code **Secret Storage** (OS-encrypted), never in settings files.
 - **Untrusted workspaces:** a cloned repo cannot redirect requests through its own
   `.vscode/settings.json`, because workspace-level `ai.baseUrl` and `ai.mode` are ignored.
-- The graph webview runs under a strict Content Security Policy.
+- Webviews run under a strict Content Security Policy. AI output is rendered with raw HTML
+  escaped and only http(s) links allowed, and link clicks are re-validated by the extension.
+- Mode effects stay inside Sandbox Atlas's own panels. It never patches VS Code's files, unlike
+  "glow" themes that make VS Code report a corrupt installation.
 
 ## Command line
 

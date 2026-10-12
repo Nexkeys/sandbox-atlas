@@ -24,6 +24,7 @@
   "categories": [
     "AI",
     "Visualization",
+    "Themes",
     "Other"
   ],
   "keywords": [
@@ -34,7 +35,9 @@
     "ollama",
     "offline ai",
     "vibe coding",
-    "react"
+    "react",
+    "theme",
+    "hacker theme"
   ],
   "pricing": "Free",
   "extensionKind": [
@@ -156,6 +159,18 @@
         "icon": "$(checklist)"
       },
       {
+        "command": "sandboxAtlas.selectMode",
+        "title": "Select Mode",
+        "category": "Sandbox Atlas",
+        "icon": "$(paintcan)"
+      },
+      {
+        "command": "sandboxAtlas.toggleEffects",
+        "title": "Toggle Visual Effects",
+        "category": "Sandbox Atlas",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "sandboxAtlas.selectAiProvider",
         "title": "Select AI Provider",
         "category": "Sandbox Atlas",
@@ -207,6 +222,11 @@
     "menus": {
       "view/title": [
         {
+          "command": "sandboxAtlas.selectMode",
+          "when": "view == sandboxAtlas.overview",
+          "group": "navigation@0"
+        },
+        {
           "command": "sandboxAtlas.showGraph",
           "when": "view == sandboxAtlas.map",
           "group": "navigation@1"
@@ -240,6 +260,11 @@
           "command": "sandboxAtlas.openWalkthrough",
           "when": "view == sandboxAtlas.overview",
           "group": "navigation@2"
+        },
+        {
+          "command": "sandboxAtlas.selectMode",
+          "when": "view == sandboxAtlas.map",
+          "group": "2_settings"
         }
       ],
       "view/item/context": [
@@ -374,6 +399,68 @@
           "default": true,
           "markdownDescription": "Re-index changed files automatically when they are saved, created or deleted.",
           "order": 10
+        },
+        "sandboxAtlas.appearance.mode": {
+          "type": "string",
+          "default": "classic",
+          "enum": [
+            "classic",
+            "vibe",
+            "hacker",
+            "soft",
+            "midnight",
+            "sunset",
+            "blueprint",
+            "zen"
+          ],
+          "enumDescriptions": [
+            "Classic: native look, follows your VS Code theme",
+            "Vibe Coder: neon gradients, glow and good energy",
+            "Hacker: terminal green on black, monospace, CRT scanlines",
+            "Soft: calm pastels on cream, rounded and gentle",
+            "Midnight: deep navy and moonlit blues",
+            "Sunset: warm oranges and rose",
+            "Blueprint: white ink on a cyan-blue grid",
+            "Zen: ink on paper, minimal and serif"
+          ],
+          "markdownDescription": "How Sandbox Atlas looks: the dependency graph, results panel and status bar. Use **Sandbox Atlas: Select Mode** to preview modes live.",
+          "order": 20
+        },
+        "sandboxAtlas.appearance.effects": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Glow and scanline effects in modes that use them. Always off when your OS asks for reduced motion and in high-contrast themes.",
+          "order": 21
+        },
+        "sandboxAtlas.appearance.applyColorTheme": {
+          "type": "string",
+          "default": "ask",
+          "enum": [
+            "ask",
+            "always",
+            "never"
+          ],
+          "enumDescriptions": [
+            "Ask before switching VS Code to the matching colour theme",
+            "Always switch VS Code to the matching colour theme",
+            "Never change the VS Code colour theme"
+          ],
+          "markdownDescription": "Whether choosing a mode also switches VS Code to its matching **Sandbox Atlas** colour theme. Classic restores your previous theme.",
+          "order": 22
+        },
+        "sandboxAtlas.results.view": {
+          "type": "string",
+          "default": "panel",
+          "enum": [
+            "panel",
+            "markdown"
+          ],
+          "enumDescriptions": [
+            "Themed Atlas Results panel with copy and save actions",
+            "VS Code built-in markdown preview"
+          ],
+          "markdownDescription": "Where AI answers and project maps open.",
+          "order": 23
         }
       }
     },
@@ -393,6 +480,19 @@
             "completionEvents": [
               "onCommand:sandboxAtlas.selectAiProvider",
               "onSettingChanged:sandboxAtlas.ai.mode"
+            ]
+          },
+          {
+            "id": "pickMode",
+            "title": "Make it yours",
+            "description": "Pick a mode — Vibe Coder, Hacker, Soft, Midnight, Sunset, Blueprint, Zen or Classic. Atlas panels preview each one live, and you can optionally switch VS Code to the matching colour theme.\n[Select Mode](command:sandboxAtlas.selectMode)",
+            "media": {
+              "image": "media/screenshots/modes.png",
+              "altText": "The eight Sandbox Atlas modes"
+            },
+            "completionEvents": [
+              "onCommand:sandboxAtlas.selectMode",
+              "onSettingChanged:sandboxAtlas.appearance.mode"
             ]
           },
           {
@@ -435,6 +535,43 @@
           }
         ]
       }
+    ],
+    "themes": [
+      {
+        "label": "Sandbox Atlas Vibe",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-vibe-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Hacker",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-hacker-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Soft",
+        "uiTheme": "vs",
+        "path": "./themes/atlas-soft-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Midnight",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-midnight-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Sunset",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-sunset-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Blueprint",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-blueprint-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Zen",
+        "uiTheme": "vs",
+        "path": "./themes/atlas-zen-color-theme.json"
+      }
     ]
   },
   "scripts": {
@@ -455,7 +592,8 @@
     "package": "vsce package --no-dependencies",
     "publish:vsce": "vsce publish --no-dependencies",
     "publish:ovsx": "npx --yes ovsx publish --no-dependencies",
-    "cli": "node dist/cli.js"
+    "cli": "node dist/cli.js",
+    "themes": "node scripts/generate-themes.ts"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

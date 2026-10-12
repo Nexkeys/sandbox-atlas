@@ -58,10 +58,16 @@ const targets = [
 		banner: { js: '#!/usr/bin/env node' },
 	},
 	{
-		// Graph webview (browser sandbox).
+		// Webviews (browser sandbox): dependency graph and themed results panel.
 		...shared,
-		entryPoints: ['src/webview/graph/graph.ts', 'src/webview/graph/graph.css'],
+		entryPoints: [
+			'src/webview/graph/graph.ts',
+			'src/webview/graph/graph.css',
+			'src/webview/results/results.ts',
+			'src/webview/results/results.css',
+		],
 		outdir: 'dist/webview',
+		entryNames: '[name]',
 		platform: 'browser',
 		format: 'iife',
 		target: 'es2022',

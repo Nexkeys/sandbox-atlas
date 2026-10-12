@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import type { IndexStatus } from '../../core';
+import { atlasModes } from '../../shared/appearance';
 import type { AtlasSession } from '../atlasSession';
 
-const display: Record<IndexStatus, { text: string; tooltip: string }> = {
-  idle: { text: '$(map) Atlas', tooltip: 'Sandbox Atlas: not indexed yet — click for options' },
-  indexing: { text: '$(sync~spin) Atlas', tooltip: 'Sandbox Atlas: indexing in the background' },
-  ready: { text: '$(map) Atlas', tooltip: 'Sandbox Atlas: ready' },
-  error: { text: '$(warning) Atlas', tooltip: 'Sandbox Atlas: indexing failed — click for details' },
+const tooltips: Record<IndexStatus, string> = {
+  idle: 'not indexed yet — click for options',
+  indexing: 'indexing in the background',
+  ready: 'ready',
+  error: 'indexing failed — click for details',
 };
 
 /** Workspace-scoped status item (left side) mirroring the index state. */
@@ -29,8 +30,10 @@ export class AtlasStatusBar implements vscode.Disposable {
 
   private render(): void {
     const status = this.session.overallStatus();
-    this.item.text = display[status].text;
-    this.item.tooltip = display[status].tooltip;
+    const mode = atlasModes[this.session.appearance.state.mode];
+    const icon = status === 'indexing' ? 'sync~spin' : status === 'error' ? 'warning' : mode.icon;
+    this.item.text = `$(${icon}) Atlas`;
+    this.item.tooltip = `Sandbox Atlas (${mode.label} mode): ${tooltips[status]}`;
     this.item.backgroundColor = status === 'error' ? new vscode.ThemeColor('statusBarItem.errorBackground') : undefined;
   }
 }

@@ -46,7 +46,7 @@ flowchart TB
 | Folder | Responsibility | May import |
 | --- | --- | --- |
 | `src/core` | Indexing, parsing, storage, graph, context, AI, features. Pure Node. | Node built-ins, npm libraries |
-| `src/shared` | Message types shared by hosts and webviews | `src/core/model.ts` types only |
+| `src/shared` | Appearance modes and webview message types shared by hosts, webviews and build scripts | `src/core/model.ts` types only |
 | `src/webview` | Browser UI (graph). Bundled separately for the browser. | `src/shared`, core **types** |
 | `src/extension` | VS Code UI: commands, views, status bar, webview hosting | everything above + `vscode` |
 | `src/cli` | Command-line host | `src/core` |
@@ -87,6 +87,23 @@ likes: VS Code settings, CLI flags or env vars, a desktop settings screen.
 6. **AI.** `runAiRequest` applies the daily cap for online providers and calls any
    OpenAI-compatible endpoint with timeout and cancellation. It records usage and renders
    markdown.
+
+## Appearance modes
+
+`src/shared/appearance.ts` is the single source of truth for every mode: its palette, fonts,
+radius, effects, status-bar icon and syntax colours. Three things read it:
+
+- **Webviews** (`src/webview/common/appearance.ts`) turn a mode into `--atlas-*` CSS tokens and
+  `data-glow`, `data-scanlines` and `data-grid` attributes. Classic maps the tokens onto VS Code's
+  `--vscode-*` variables. High-contrast themes always fall back to Classic, and reduced motion
+  disables effects.
+- **The extension** (`src/extension/appearanceController.ts`) owns the setting and the live
+  preview in the picker. It also handles the opt-in colour-theme switch, remembering the previous
+  theme so Classic can restore it.
+- **`npm run themes`** (`scripts/generate-themes.ts`) generates the seven matching colour themes in
+  `themes/`. Run it after editing a palette and commit the output.
+
+`src/test/unit/appearance.test.ts` fails the build if any palette drops below WCAG AA contrast.
 
 ## Storage
 
