@@ -9,7 +9,8 @@
 		"rootDir": "src",
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"types": ["node", "mocha"]
 	},
 	"include": [
 		"src"
