@@ -6,6 +6,9 @@
 !dist/webview/graph.css
 !dist/webview/results.js
 !dist/webview/results.css
+!dist/webview/chat.js
+!dist/webview/chat.css
+!dist/webview/fonts/**
 !themes/**
 !media/icon.png
 !media/activity-bar.svg

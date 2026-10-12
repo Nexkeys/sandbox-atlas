@@ -18,6 +18,3 @@ node_modules/
 Thumbs.db
 
 
-
-# npx ovsx create-namespace nexkeys -p <your-openvsx-token>
-# npx ovsx publish sandbox-atlas-0.1.0.vsix -p <your-openvsx-token>

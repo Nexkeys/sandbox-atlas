@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { atlasModeIds, atlasModes, isAtlasModeId, type ModePalette } from '../../shared/appearance';
+import { atlasModeIds, atlasModes, iconSets, isAtlasModeId, resolveAppearance, type ModePalette } from '../../shared/appearance';
 import { isSafeHref, renderMarkdown } from '../../core/util/markdown';
 
 /** WCAG 2.x relative luminance contrast ratio between two #rrggbb colours. */
@@ -40,12 +40,39 @@ function failures(palette: ModePalette): string[] {
 }
 
 suite('Appearance modes', () => {
-  test('there are eight modes with unique labels and themes', () => {
-    assert.strictEqual(atlasModeIds.length, 8);
-    assert.strictEqual(new Set(atlasModeIds.map((id) => atlasModes[id].label)).size, 8);
+  test('fifteen modes with unique labels, fourteen matching colour themes', () => {
+    assert.strictEqual(atlasModeIds.length, 15);
+    assert.strictEqual(new Set(atlasModeIds.map((id) => atlasModes[id].label)).size, 15);
     const themed = atlasModeIds.filter((id) => atlasModes[id].colorTheme);
-    assert.strictEqual(new Set(themed.map((id) => atlasModes[id].colorTheme)).size, 7);
-    assert.ok(isAtlasModeId('hacker') && !isAtlasModeId('nope'));
+    assert.strictEqual(new Set(themed.map((id) => atlasModes[id].colorTheme)).size, 14);
+    assert.ok(isAtlasModeId('cyberpunk') && !isAtlasModeId('nope'));
+  });
+
+  test('every mode names a valid icon set and shape', () => {
+    atlasModeIds.forEach((id) => {
+      assert.ok(atlasModes[id].iconSet in iconSets, `${id} icon set`);
+      assert.ok(['rounded', 'pill', 'sharp', 'angular', 'pixel'].includes(atlasModes[id].shape), `${id} shape`);
+    });
+    Object.values(iconSets).forEach((set) => Object.entries(set).forEach(([slot, value]) => {
+      assert.ok(slot === 'label' || typeof value === 'object' || /^[a-z0-9-]+$/.test(value), `${set.label}.${slot}`);
+    }));
+  });
+
+  test('font and icon overrides win over the mode defaults', () => {
+    const plain = resolveAppearance({ mode: 'arcade', effects: true });
+    assert.match(plain.fonts.display, /Press Start 2P/);
+    assert.strictEqual(plain.icons, iconSets.pixel);
+
+    const custom = resolveAppearance({ mode: 'arcade', effects: true, uiFont: 'Inter', codeFont: 'Fira Code', iconSet: 'minimal' });
+    assert.match(custom.fonts.ui, /^'Inter'/);
+    assert.match(custom.fonts.display, /^'Inter'/);
+    assert.match(custom.fonts.mono, /^'Fira Code'/);
+    assert.strictEqual(custom.icons, iconSets.minimal);
+
+    assert.strictEqual(resolveAppearance({ mode: 'retro', effects: true }).fontScale, 1.3);
+    assert.strictEqual(resolveAppearance({ mode: 'classic', effects: true, uiFont: 'VT323' }).fontScale, 1.3);
+    assert.match(resolveAppearance({ mode: 'retro', effects: true, uiFont: 'editor' }).fonts.ui, /--vscode-font-family/);
+    assert.match(resolveAppearance({ mode: 'zen', effects: true, uiFont: 'Comic Sans' }).fonts.ui, /Inter/, 'unknown fonts fall back to the mode');
   });
 
   atlasModeIds.filter((id) => atlasModes[id].palette).forEach((id) => {

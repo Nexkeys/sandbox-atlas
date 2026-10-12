@@ -1,8 +1,8 @@
 {
   "name": "sandbox-atlas",
   "displayName": "Sandbox Atlas",
-  "description": "Map any codebase in seconds: dependency graph, impact analysis and AI edit plans. Local-first, works offline with Ollama.",
-  "version": "0.1.0",
+  "description": "Chat with your codebase, map it in seconds and see what breaks before you change it. Local-first, works offline with Ollama, 15 modes.",
+  "version": "0.2.0",
   "publisher": "nexkeys",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -76,6 +76,12 @@
     "views": {
       "sandboxAtlas": [
         {
+          "type": "webview",
+          "id": "sandboxAtlas.chat",
+          "name": "Chat",
+          "contextualTitle": "Sandbox Atlas"
+        },
+        {
           "id": "sandboxAtlas.map",
           "name": "Atlas Map",
           "contextualTitle": "Sandbox Atlas"
@@ -100,6 +106,18 @@
       }
     ],
     "commands": [
+      {
+        "command": "sandboxAtlas.openChat",
+        "title": "Open Chat",
+        "category": "Sandbox Atlas",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "sandboxAtlas.askAboutFile",
+        "title": "Ask Atlas About This File",
+        "category": "Sandbox Atlas",
+        "icon": "$(comment-discussion)"
+      },
       {
         "command": "sandboxAtlas.scanWorkspace",
         "title": "Scan Workspace",
@@ -159,6 +177,12 @@
         "title": "Generate Edit Plan",
         "category": "Sandbox Atlas",
         "icon": "$(checklist)"
+      },
+      {
+        "command": "sandboxAtlas.customizeAppearance",
+        "title": "Customize Appearance (Mode, Fonts, Icons)",
+        "category": "Sandbox Atlas",
+        "icon": "$(symbol-color)"
       },
       {
         "command": "sandboxAtlas.selectMode",
@@ -230,7 +254,7 @@
     "menus": {
       "view/title": [
         {
-          "command": "sandboxAtlas.selectMode",
+          "command": "sandboxAtlas.customizeAppearance",
           "when": "view == sandboxAtlas.overview",
           "group": "navigation@0"
         },
@@ -300,6 +324,11 @@
           "command": "sandboxAtlas.showGraphForFile",
           "when": "view == sandboxAtlas.map && viewItem == atlasCodeFile",
           "group": "1_atlas@3"
+        },
+        {
+          "command": "sandboxAtlas.askAboutFile",
+          "when": "view == sandboxAtlas.map && viewItem == atlasCodeFile",
+          "group": "1_atlas@0"
         }
       ],
       "explorer/context": [
@@ -318,6 +347,10 @@
       ],
       "sandboxAtlas.fileMenu": [
         {
+          "command": "sandboxAtlas.askAboutFile",
+          "group": "0_chat@1"
+        },
+        {
           "command": "sandboxAtlas.analyzeImpact",
           "group": "1_ai@1"
         },
@@ -333,6 +366,10 @@
       "commandPalette": [
         {
           "command": "sandboxAtlas.showGraphForFile",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "sandboxAtlas.askAboutFile",
           "when": "editorIsOpen"
         }
       ]
@@ -419,19 +456,33 @@
             "midnight",
             "sunset",
             "blueprint",
-            "zen"
+            "zen",
+            "retro",
+            "synthwave",
+            "solar",
+            "groove",
+            "arctic",
+            "cyberpunk",
+            "arcade"
           ],
           "enumDescriptions": [
-            "Classic: native look, follows your VS Code theme",
-            "Vibe Coder: neon gradients, glow and good energy",
-            "Hacker: terminal green on black, monospace, CRT scanlines",
-            "Soft: calm pastels on cream, rounded and gentle",
-            "Midnight: deep navy and moonlit blues",
-            "Sunset: warm oranges and rose",
-            "Blueprint: white ink on a cyan-blue grid",
-            "Zen: ink on paper, minimal and serif"
+            "Classic: Native look — follows your VS Code theme",
+            "Vibe Coder: Neon gradients, glow and good energy",
+            "Hacker: Terminal green on black, monospace, CRT scanlines",
+            "Soft: Calm pastels on cream, rounded and gentle",
+            "Midnight: Deep navy and moonlit blues for late sessions",
+            "Sunset: Warm oranges and rose, golden-hour energy",
+            "Blueprint: Engineering blueprint: white ink on a cyan-blue grid",
+            "Zen: Ink on paper — minimal, serif, distraction-free",
+            "Retro Terminal: Amber CRT monitor: VT323 pixel type, scanlines and phosphor glow",
+            "Synthwave: '80s neon: hot pink and cyan glow over a purple night",
+            "Solar: Solarized-inspired teal and gold, IBM Plex type",
+            "Groove: Gruvbox-inspired warm retro colours, Fira type with ligatures",
+            "Arctic: Nord-inspired cool frost blues, clean Inter type",
+            "Cyberpunk: Night-city yellow and cyan, cut-corner panels, Orbitron headings",
+            "Arcade: 8-bit console palette, pixel borders and Press Start 2P headings"
           ],
-          "markdownDescription": "How Sandbox Atlas looks: the dependency graph, results panel and status bar. Use **Sandbox Atlas: Select Mode** to preview modes live.",
+          "markdownDescription": "How Sandbox Atlas looks — colours, fonts, icons, shapes and effects across the graph, chat, results panel, sidebar and status bar. Use **Sandbox Atlas: Customize Appearance** to preview everything live.",
           "order": 20
         },
         "sandboxAtlas.appearance.effects": {
@@ -469,6 +520,90 @@
           ],
           "markdownDescription": "Where AI answers and project maps open.",
           "order": 23
+        },
+        "sandboxAtlas.appearance.uiFont": {
+          "type": "string",
+          "default": "mode",
+          "enum": [
+            "mode",
+            "editor",
+            "Inter",
+            "Poppins",
+            "Nunito",
+            "Space Grotesk",
+            "IBM Plex Sans",
+            "Fira Sans",
+            "Source Serif 4",
+            "Orbitron",
+            "VT323",
+            "Press Start 2P"
+          ],
+          "enumDescriptions": [
+            "The active mode's font",
+            "VS Code's UI font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font"
+          ],
+          "markdownDescription": "Font for Atlas panels (graph, chat, results). Fonts are bundled, so nothing needs installing.",
+          "order": 24
+        },
+        "sandboxAtlas.appearance.codeFont": {
+          "type": "string",
+          "default": "mode",
+          "enum": [
+            "mode",
+            "editor",
+            "JetBrains Mono",
+            "Fira Code",
+            "IBM Plex Mono",
+            "Space Mono",
+            "VT323"
+          ],
+          "enumDescriptions": [
+            "The active mode's code font",
+            "VS Code's editor font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font",
+            "Bundled font"
+          ],
+          "markdownDescription": "Monospace font for code and file paths in Atlas panels.",
+          "order": 25
+        },
+        "sandboxAtlas.appearance.iconSet": {
+          "type": "string",
+          "default": "mode",
+          "enum": [
+            "mode",
+            "classic",
+            "terminal",
+            "minimal",
+            "playful",
+            "technical",
+            "geometric",
+            "pixel"
+          ],
+          "enumDescriptions": [
+            "The active mode's icons",
+            "Classic VS Code symbols",
+            "Terminal prompts and chevrons",
+            "Minimal dots and circles",
+            "Playful sparkles and stars",
+            "Technical schematics",
+            "Geometric shapes",
+            "Pixel / 8-bit"
+          ],
+          "markdownDescription": "Icons used in the Atlas Map, Overview and dependency graph node shapes.",
+          "order": 26
         }
       }
     },
@@ -493,13 +628,14 @@
           {
             "id": "pickMode",
             "title": "Make it yours",
-            "description": "Pick a mode — Vibe Coder, Hacker, Soft, Midnight, Sunset, Blueprint, Zen or Classic. Atlas panels preview each one live, and you can optionally switch VS Code to the matching colour theme.\n[Select Mode](command:sandboxAtlas.selectMode)",
+            "description": "Pick one of 15 modes: Vibe Coder, Hacker, Retro Terminal, Synthwave, Cyberpunk, Arcade, Solar, Groove, Arctic and more. Each changes colours, fonts, icons and shapes; you can also mix in your own font and icon set.\n[Customize Appearance](command:sandboxAtlas.customizeAppearance)",
             "media": {
               "image": "media/screenshots/modes.png",
               "altText": "The eight Sandbox Atlas modes"
             },
             "completionEvents": [
               "onCommand:sandboxAtlas.selectMode",
+              "onCommand:sandboxAtlas.customizeAppearance",
               "onSettingChanged:sandboxAtlas.appearance.mode"
             ]
           },
@@ -530,16 +666,17 @@
           },
           {
             "id": "askAtlas",
-            "title": "Ask where a feature lives",
-            "description": "Trace a feature, analyze the impact of changing a file, or get a step-by-step edit plan.\n[Trace a Feature](command:sandboxAtlas.traceFeature)",
+            "title": "Chat with your codebase",
+            "description": "Open **Chat** in the Sandbox Atlas sidebar (Ctrl+Alt+A) and ask anything, or type / for commands like /trace, /impact and /plan.\n[Open Chat](command:sandboxAtlas.openChat)",
             "media": {
               "image": "media/screenshots/trace.png",
               "altText": "Feature trace answered by a local Ollama model"
             },
             "completionEvents": [
+              "onCommand:sandboxAtlas.openChat",
               "onCommand:sandboxAtlas.traceFeature",
               "onCommand:sandboxAtlas.analyzeImpact",
-              "onCommand:sandboxAtlas.generateEditPlan"
+              "onView:sandboxAtlas.chat"
             ]
           }
         ]
@@ -580,6 +717,48 @@
         "label": "Sandbox Atlas Zen",
         "uiTheme": "vs",
         "path": "./themes/atlas-zen-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Retro Terminal",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-retro-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Synthwave",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-synthwave-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Solar",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-solar-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Groove",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-groove-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Arctic",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-arctic-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Cyberpunk",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-cyberpunk-color-theme.json"
+      },
+      {
+        "label": "Sandbox Atlas Arcade",
+        "uiTheme": "vs-dark",
+        "path": "./themes/atlas-arcade-color-theme.json"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "sandboxAtlas.openChat",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a"
       }
     ]
   },
@@ -605,6 +784,20 @@
     "themes": "node scripts/generate-themes.ts"
   },
   "devDependencies": {
+    "@fontsource/fira-code": "^5.3.0",
+    "@fontsource/fira-sans": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
+    "@fontsource/orbitron": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
+    "@fontsource/press-start-2p": "^5.3.0",
+    "@fontsource/source-serif-4": "^5.3.1",
+    "@fontsource/space-grotesk": "^5.3.0",
+    "@fontsource/space-mono": "^5.3.0",
+    "@fontsource/vt323": "^5.3.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.19",
     "@types/vscode": "1.101.0",

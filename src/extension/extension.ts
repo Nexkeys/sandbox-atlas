@@ -10,7 +10,9 @@ import { registerAtlasCommands } from './commands/atlasCommands';
 import { registerSettingsCommands } from './commands/settingsCommands';
 import { createLogger, createSecretStore, createStateStore, readAiSettings } from './host/vscodePlatform';
 import { workspaceRoots } from './host/workspaceRoots';
+import { uriFromArgument } from './ui/interaction';
 import { AtlasMapProvider } from './views/atlasMapView';
+import { ChatViewProvider } from './views/chatView';
 import { OverviewProvider } from './views/overviewView';
 import { AtlasStatusBar } from './views/statusBar';
 
@@ -44,12 +46,20 @@ export function activate(context: vscode.ExtensionContext): SandboxAtlasApi {
   const session = new AtlasSession(engine, appearance, context.extensionUri);
   const atlasMap = new AtlasMapProvider(session);
   const overview = new OverviewProvider(session);
+  const chat = new ChatViewProvider(session, context.workspaceState);
 
   context.subscriptions.push(
     appearance,
     session,
     atlasMap,
     overview,
+    chat,
+    vscode.window.registerWebviewViewProvider(ChatViewProvider.viewId, chat),
+    vscode.commands.registerCommand('sandboxAtlas.openChat', () => chat.open()),
+    vscode.commands.registerCommand('sandboxAtlas.askAboutFile', (argument: unknown) => chat.open(
+      uriFromArgument(argument) ?? vscode.window.activeTextEditor?.document.uri,
+      'What does this file do, and how does it fit into the project?',
+    )),
     new AtlasStatusBar(session),
     new AutoRefresh(session),
     vscode.window.createTreeView('sandboxAtlas.map', { treeDataProvider: atlasMap, showCollapseAll: true }),

@@ -107,6 +107,8 @@ export class AtlasMapProvider implements vscode.TreeDataProvider<MapNode>, vscod
       hasChildren ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
     );
     item.resourceUri = vscode.Uri.file(node.file.absolutePath);
+    // Expandable items with a resourceUri get a folder icon unless told they're files.
+    item.iconPath = vscode.ThemeIcon.File;
     item.command = { command: 'vscode.open', title: 'Open', arguments: [item.resourceUri] };
 
     if (code) {
@@ -140,6 +142,7 @@ export class AtlasMapProvider implements vscode.TreeDataProvider<MapNode>, vscod
 
   private symbolChildren(node: FileNode): SymbolNode[] {
     const model = this.model(node.root);
+    const icons = this.session.appearance.resolved.icons;
     const code = model.code.get(node.file.absolutePath);
     if (code) {
       const componentNames = new Set(code.components.map((component) => component.name));
@@ -149,7 +152,7 @@ export class AtlasMapProvider implements vscode.TreeDataProvider<MapNode>, vscod
         label: component.name,
         detail: component.usesHooks ? 'component · hooks' : 'component',
         line: component.lineStart,
-        icon: 'symbol-class',
+        icon: icons.component,
         color: 'symbolIcon.classForeground',
       }));
       const functions = code.functions
@@ -161,7 +164,7 @@ export class AtlasMapProvider implements vscode.TreeDataProvider<MapNode>, vscod
           label: `${fn.name}()`,
           detail: [fn.isExported ? 'exported' : undefined, fn.isAsync ? 'async' : undefined].filter(Boolean).join(' · ') || undefined,
           line: fn.lineStart,
-          icon: fn.isExported ? 'symbol-function' : 'symbol-method',
+          icon: fn.isExported ? icons.function : icons.method,
           color: fn.isExported ? 'symbolIcon.functionForeground' : undefined,
         }));
       return [...components, ...functions];
@@ -174,7 +177,7 @@ export class AtlasMapProvider implements vscode.TreeDataProvider<MapNode>, vscod
       label: section.title,
       detail: `H${section.level}`,
       line: section.lineStart,
-      icon: section.level === 1 ? 'symbol-namespace' : 'symbol-key',
+      icon: section.level === 1 ? icons.heading : icons.section,
     }));
   }
 

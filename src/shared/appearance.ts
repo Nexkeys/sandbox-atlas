@@ -6,7 +6,14 @@
  * Pure data, no imports: shared by the extension host, the browser webviews and build scripts.
  */
 
-export type AtlasModeId = 'classic' | 'vibe' | 'hacker' | 'soft' | 'midnight' | 'sunset' | 'blueprint' | 'zen';
+export type AtlasModeId =
+  | 'classic' | 'vibe' | 'hacker' | 'soft' | 'midnight' | 'sunset' | 'blueprint' | 'zen'
+  | 'retro' | 'synthwave' | 'solar' | 'groove' | 'arctic' | 'cyberpunk' | 'arcade';
+
+/** Corner and border language of panels and buttons. */
+export type ModeShape = 'rounded' | 'pill' | 'sharp' | 'angular' | 'pixel';
+
+export type IconSetId = 'classic' | 'terminal' | 'minimal' | 'playful' | 'technical' | 'geometric' | 'pixel';
 
 export interface SyntaxPalette {
   comment: string;
@@ -62,6 +69,13 @@ export interface AtlasMode {
     display?: string;
   };
   radius: number;
+  shape: ModeShape;
+  /** Headings and buttons in upper case (terminal-style modes). */
+  headingCase: 'normal' | 'upper';
+  /** Multiplier for the base font size (pixel fonts need a larger size to stay legible). */
+  fontScale: number;
+  /** Codicons used in the sidebar, status bar and graph. */
+  iconSet: IconSetId;
   effects: {
     glow: boolean;
     scanlines: boolean;
@@ -73,7 +87,10 @@ export interface AtlasMode {
 
 const systemUi = "var(--vscode-font-family, 'Segoe UI', system-ui, sans-serif)";
 const systemMono = "var(--vscode-editor-font-family, Consolas, 'Courier New', monospace)";
-const codeMono = "'JetBrains Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace";
+// Bundled fonts (see src/webview/common/fonts.css) come first; system fonts are fallbacks.
+const sans = (family: string) => `'${family}', 'Segoe UI', system-ui, sans-serif`;
+const mono = (family: string) => `'${family}', 'Cascadia Code', Consolas, monospace`;
+const codeMono = mono('JetBrains Mono');
 
 export const atlasModes: Record<AtlasModeId, AtlasMode> = {
   classic: {
@@ -84,6 +101,10 @@ export const atlasModes: Record<AtlasModeId, AtlasMode> = {
     kind: 'native',
     fonts: { ui: systemUi, mono: systemMono },
     radius: 4,
+    shape: 'rounded',
+    headingCase: 'normal',
+    fontScale: 1,
+    iconSet: 'classic',
     effects: { glow: false, scanlines: false, grid: false },
   },
 
@@ -94,8 +115,12 @@ export const atlasModes: Record<AtlasModeId, AtlasMode> = {
     icon: 'sparkle',
     kind: 'dark',
     colorTheme: 'Sandbox Atlas Vibe',
-    fonts: { ui: "'Inter', 'Segoe UI', system-ui, sans-serif", mono: codeMono, display: "'Poppins', 'Segoe UI', system-ui, sans-serif" },
+    fonts: { ui: sans('Inter'), mono: codeMono, display: sans('Poppins') },
     radius: 14,
+    shape: 'pill',
+    headingCase: 'normal',
+    fontScale: 1,
+    iconSet: 'playful',
     effects: { glow: true, scanlines: false, grid: false },
     palette: {
       background: '#160d2e',
@@ -128,6 +153,10 @@ export const atlasModes: Record<AtlasModeId, AtlasMode> = {
     colorTheme: 'Sandbox Atlas Hacker',
     fonts: { ui: codeMono, mono: codeMono },
     radius: 0,
+    shape: 'sharp',
+    headingCase: 'upper',
+    fontScale: 1,
+    iconSet: 'terminal',
     effects: { glow: true, scanlines: true, grid: false },
     palette: {
       background: '#030803',
@@ -157,8 +186,12 @@ export const atlasModes: Record<AtlasModeId, AtlasMode> = {
     icon: 'heart',
     kind: 'light',
     colorTheme: 'Sandbox Atlas Soft',
-    fonts: { ui: "'Nunito', 'Segoe UI', system-ui, sans-serif", mono: codeMono },
+    fonts: { ui: sans('Nunito'), mono: codeMono },
     radius: 16,
+    shape: 'rounded',
+    headingCase: 'normal',
+    fontScale: 1,
+    iconSet: 'minimal',
     effects: { glow: false, scanlines: false, grid: false },
     palette: {
       background: '#fbf7f3',
@@ -188,8 +221,12 @@ export const atlasModes: Record<AtlasModeId, AtlasMode> = {
     icon: 'star-full',
     kind: 'dark',
     colorTheme: 'Sandbox Atlas Midnight',
-    fonts: { ui: systemUi, mono: codeMono },
+    fonts: { ui: sans('Inter'), mono: codeMono },
     radius: 8,
+    shape: 'rounded',
+    headingCase: 'normal',
+    fontScale: 1,
+    iconSet: 'classic',
     effects: { glow: false, scanlines: false, grid: false },
     palette: {
       background: '#0b1020',
@@ -220,8 +257,12 @@ export const atlasModes: Record<AtlasModeId, AtlasMode> = {
     icon: 'flame',
     kind: 'dark',
     colorTheme: 'Sandbox Atlas Sunset',
-    fonts: { ui: systemUi, mono: codeMono },
+    fonts: { ui: sans('Space Grotesk'), mono: codeMono, display: sans('Poppins') },
     radius: 10,
+    shape: 'rounded',
+    headingCase: 'normal',
+    fontScale: 1,
+    iconSet: 'playful',
     effects: { glow: true, scanlines: false, grid: false },
     palette: {
       background: '#1d1117',
@@ -252,8 +293,12 @@ export const atlasModes: Record<AtlasModeId, AtlasMode> = {
     icon: 'circuit-board',
     kind: 'dark',
     colorTheme: 'Sandbox Atlas Blueprint',
-    fonts: { ui: "'Segoe UI', system-ui, sans-serif", mono: codeMono, display: codeMono },
+    fonts: { ui: sans('IBM Plex Sans'), mono: mono('IBM Plex Mono'), display: mono('IBM Plex Mono') },
     radius: 2,
+    shape: 'sharp',
+    headingCase: 'upper',
+    fontScale: 1,
+    iconSet: 'technical',
     effects: { glow: false, scanlines: false, grid: true },
     palette: {
       background: '#0c3a63',
@@ -283,8 +328,12 @@ export const atlasModes: Record<AtlasModeId, AtlasMode> = {
     icon: 'circle-large-outline',
     kind: 'light',
     colorTheme: 'Sandbox Atlas Zen',
-    fonts: { ui: "'Segoe UI', system-ui, sans-serif", mono: codeMono, display: "'Iowan Old Style', 'Palatino Linotype', Georgia, serif" },
+    fonts: { ui: sans('Inter'), mono: codeMono, display: "'Source Serif 4', 'Iowan Old Style', Georgia, serif" },
     radius: 3,
+    shape: 'sharp',
+    headingCase: 'normal',
+    fontScale: 1,
+    iconSet: 'minimal',
     effects: { glow: false, scanlines: false, grid: false },
     palette: {
       background: '#f6f3ec',
@@ -306,6 +355,253 @@ export const atlasModes: Record<AtlasModeId, AtlasMode> = {
       },
     },
   },
+
+  retro: {
+    id: 'retro',
+    label: 'Retro Terminal',
+    description: 'Amber CRT monitor: VT323 pixel type, scanlines and phosphor glow',
+    icon: 'terminal-bash',
+    kind: 'dark',
+    colorTheme: 'Sandbox Atlas Retro Terminal',
+    fonts: { ui: mono('VT323'), mono: mono('VT323'), display: mono('VT323') },
+    radius: 0,
+    shape: 'sharp',
+    headingCase: 'upper',
+    fontScale: 1.3,
+    iconSet: 'terminal',
+    effects: { glow: true, scanlines: true, grid: false },
+    palette: {
+      background: '#0d0800',
+      surface: '#160e02',
+      surfaceAlt: '#1e1404',
+      border: '#5a3c0a',
+      text: '#ffb000',
+      muted: '#d39a2a',
+      accent: '#ffb000',
+      accentText: '#120a00',
+      edge: '#9a6a14',
+      focus: '#ffd166',
+      codeBackground: '#090500',
+      nodes: ['#ffb000', '#ffd166', '#ff8c00', '#ffe8a3', '#e6a100', '#ffc861', '#ff9f1a', '#fff0c2', '#d99100', '#ffbe3d'],
+      syntax: {
+        comment: '#a8792a', keyword: '#ffd166', string: '#ffe8a3', number: '#ff9f1a', function: '#ffb000',
+        type: '#ffc861', variable: '#ffb000', property: '#e6a100', constant: '#ff9f1a', tag: '#ffd166',
+        attribute: '#ffe8a3', operator: '#e6a100',
+      },
+    },
+  },
+
+  synthwave: {
+    id: 'synthwave',
+    label: 'Synthwave',
+    description: "'80s neon: hot pink and cyan glow over a purple night",
+    icon: 'rocket',
+    kind: 'dark',
+    colorTheme: 'Sandbox Atlas Synthwave',
+    fonts: { ui: sans('Space Grotesk'), mono: codeMono, display: sans('Orbitron') },
+    radius: 6,
+    shape: 'rounded',
+    headingCase: 'upper',
+    fontScale: 1,
+    iconSet: 'playful',
+    effects: { glow: true, scanlines: false, grid: true },
+    palette: {
+      background: '#241b2f',
+      backgroundImage: 'linear-gradient(to bottom, rgba(255,126,219,0) 55%, rgba(255,126,219,0.16)), radial-gradient(circle at 50% 110%, rgba(54,249,246,0.18), transparent 50%)',
+      surface: '#2a2139',
+      surfaceAlt: '#34294f',
+      border: '#5b4f8c',
+      text: '#f4eefa',
+      muted: '#c2b9d4',
+      accent: '#ff7edb',
+      accentText: '#241b2f',
+      edge: '#36f9f6',
+      focus: '#36f9f6',
+      codeBackground: '#1e1726',
+      nodes: ['#ff7edb', '#36f9f6', '#fede5d', '#72f1b8', '#fe6a74', '#f97e72', '#c9a3e0', '#03edf9', '#ff8b39', '#ffffff'],
+      syntax: {
+        comment: '#9096c9', keyword: '#fede5d', string: '#ff8b39', number: '#f97e72', function: '#36f9f6',
+        type: '#fe6a74', variable: '#ff7edb', property: '#ff7edb', constant: '#f97e72', tag: '#72f1b8',
+        attribute: '#fede5d', operator: '#fede5d',
+      },
+    },
+  },
+
+  solar: {
+    id: 'solar',
+    label: 'Solar',
+    description: 'Solarized-inspired teal and gold, IBM Plex type',
+    icon: 'symbol-color',
+    kind: 'dark',
+    colorTheme: 'Sandbox Atlas Solar',
+    fonts: { ui: sans('IBM Plex Sans'), mono: mono('IBM Plex Mono') },
+    radius: 4,
+    shape: 'rounded',
+    headingCase: 'normal',
+    fontScale: 1,
+    iconSet: 'technical',
+    effects: { glow: false, scanlines: false, grid: false },
+    palette: {
+      background: '#002b36',
+      surface: '#073642',
+      surfaceAlt: '#0b4252',
+      border: '#2a5a66',
+      text: '#c5d1d1',
+      muted: '#a2b2b4',
+      accent: '#b58900',
+      accentText: '#001e26',
+      edge: '#6c8a91',
+      focus: '#2aa1e8',
+      codeBackground: '#00212b',
+      nodes: ['#b58900', '#cb4b16', '#e0504a', '#d33682', '#8b8fd8', '#268bd2', '#2aa198', '#859900', '#93a1a1', '#c0cfcf'],
+      syntax: {
+        comment: '#6f868d', keyword: '#99b000', string: '#2aa198', number: '#e05a9a', function: '#3b9be0',
+        type: '#c99a10', variable: '#a7b5b5', property: '#a7b5b5', constant: '#e0663a', tag: '#3b9be0',
+        attribute: '#c99a10', operator: '#99b000',
+      },
+    },
+  },
+
+  groove: {
+    id: 'groove',
+    label: 'Groove',
+    description: 'Gruvbox-inspired warm retro colours, Fira type with ligatures',
+    icon: 'flame',
+    kind: 'dark',
+    colorTheme: 'Sandbox Atlas Groove',
+    fonts: { ui: sans('Fira Sans'), mono: mono('Fira Code') },
+    radius: 6,
+    shape: 'rounded',
+    headingCase: 'normal',
+    fontScale: 1,
+    iconSet: 'geometric',
+    effects: { glow: false, scanlines: false, grid: false },
+    palette: {
+      background: '#282828',
+      surface: '#32302f',
+      surfaceAlt: '#3c3836',
+      border: '#5a514b',
+      text: '#ebdbb2',
+      muted: '#c9b99b',
+      accent: '#fabd2f',
+      accentText: '#282828',
+      edge: '#8a7b6f',
+      focus: '#83a598',
+      codeBackground: '#1d2021',
+      nodes: ['#fb4934', '#b8bb26', '#fabd2f', '#83a598', '#d3869b', '#8ec07c', '#fe8019', '#ebdbb2', '#689d6a', '#e0773c'],
+      syntax: {
+        comment: '#928374', keyword: '#fb4934', string: '#b8bb26', number: '#d3869b', function: '#fabd2f',
+        type: '#8ec07c', variable: '#ebdbb2', property: '#83a598', constant: '#d3869b', tag: '#fb4934',
+        attribute: '#fabd2f', operator: '#fe8019',
+      },
+    },
+  },
+
+  arctic: {
+    id: 'arctic',
+    label: 'Arctic',
+    description: 'Nord-inspired cool frost blues, clean Inter type',
+    icon: 'globe',
+    kind: 'dark',
+    colorTheme: 'Sandbox Atlas Arctic',
+    fonts: { ui: sans('Inter'), mono: codeMono },
+    radius: 8,
+    shape: 'rounded',
+    headingCase: 'normal',
+    fontScale: 1,
+    iconSet: 'minimal',
+    effects: { glow: false, scanlines: false, grid: false },
+    palette: {
+      background: '#2e3440',
+      surface: '#3b4252',
+      surfaceAlt: '#434c5e',
+      border: '#56607a',
+      text: '#eceff4',
+      muted: '#d8dee9',
+      accent: '#88c0d0',
+      accentText: '#2e3440',
+      edge: '#81a1c1',
+      focus: '#88c0d0',
+      codeBackground: '#272c36',
+      nodes: ['#88c0d0', '#81a1c1', '#7aa0d4', '#e07f88', '#d08770', '#ebcb8b', '#a3be8c', '#c9a6c3', '#8fbcbb', '#eceff4'],
+      syntax: {
+        comment: '#8390a8', keyword: '#81a1c1', string: '#a3be8c', number: '#c9a6c3', function: '#88c0d0',
+        type: '#8fbcbb', variable: '#d8dee9', property: '#d8dee9', constant: '#c9a6c3', tag: '#81a1c1',
+        attribute: '#8fbcbb', operator: '#81a1c1',
+      },
+    },
+  },
+
+  cyberpunk: {
+    id: 'cyberpunk',
+    label: 'Cyberpunk',
+    description: 'Night-city yellow and cyan, cut-corner panels, Orbitron headings',
+    icon: 'circuit-board',
+    kind: 'dark',
+    colorTheme: 'Sandbox Atlas Cyberpunk',
+    fonts: { ui: sans('Space Grotesk'), mono: mono('Space Mono'), display: sans('Orbitron') },
+    radius: 0,
+    shape: 'angular',
+    headingCase: 'upper',
+    fontScale: 1,
+    iconSet: 'technical',
+    effects: { glow: true, scanlines: false, grid: false },
+    palette: {
+      background: '#0a0a12',
+      backgroundImage: 'linear-gradient(115deg, rgba(252,238,10,0.07) 0 30%, transparent 30%), radial-gradient(circle at 90% 10%, rgba(0,240,255,0.14), transparent 40%)',
+      surface: '#12121f',
+      surfaceAlt: '#1a1a2e',
+      border: '#3a3a5c',
+      text: '#e6f7ff',
+      muted: '#9fb6cc',
+      accent: '#fcee0a',
+      accentText: '#0a0a12',
+      edge: '#00b8c4',
+      focus: '#00f0ff',
+      codeBackground: '#06060c',
+      nodes: ['#fcee0a', '#00f0ff', '#ff2a55', '#c77dff', '#00ff9f', '#ff8a00', '#5c88ff', '#ff4fd8', '#c4ff00', '#ffffff'],
+      syntax: {
+        comment: '#6f84a0', keyword: '#ff2a55', string: '#00ff9f', number: '#fcee0a', function: '#00f0ff',
+        type: '#c77dff', variable: '#e6f7ff', property: '#8fd8ff', constant: '#ff8a00', tag: '#ff4fd8',
+        attribute: '#fcee0a', operator: '#ff2a55',
+      },
+    },
+  },
+
+  arcade: {
+    id: 'arcade',
+    label: 'Arcade',
+    description: '8-bit console palette, pixel borders and Press Start 2P headings',
+    icon: 'smiley',
+    kind: 'dark',
+    colorTheme: 'Sandbox Atlas Arcade',
+    fonts: { ui: mono('Space Mono'), mono: mono('Space Mono'), display: "'Press Start 2P', 'Space Mono', monospace" },
+    radius: 0,
+    shape: 'pixel',
+    headingCase: 'upper',
+    fontScale: 1,
+    iconSet: 'pixel',
+    effects: { glow: false, scanlines: false, grid: false },
+    palette: {
+      background: '#1d1b3a',
+      surface: '#272552',
+      surfaceAlt: '#312e63',
+      border: '#6a66b8',
+      text: '#ffffff',
+      muted: '#c8c6ee',
+      accent: '#ffa300',
+      accentText: '#1d1b3a',
+      edge: '#8f8bd6',
+      focus: '#ffec27',
+      codeBackground: '#15132b',
+      nodes: ['#ff4d6d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#a99bd0', '#ff77a8', '#ffccaa', '#c2c3c7', '#d07a4a'],
+      syntax: {
+        comment: '#8f8bc4', keyword: '#ff77a8', string: '#00e436', number: '#ffa300', function: '#29adff',
+        type: '#ffec27', variable: '#ffffff', property: '#c2c3c7', constant: '#ff6b85', tag: '#ff77a8',
+        attribute: '#ffccaa', operator: '#ffec27',
+      },
+    },
+  },
 };
 
 export const atlasModeIds = Object.keys(atlasModes) as AtlasModeId[];
@@ -317,9 +613,114 @@ export function isAtlasModeId(value: unknown): value is AtlasModeId {
 /** Default categorical palette for Classic (works on light, dark and high-contrast themes). */
 export const classicNodeColors = ['#4f8ef7', '#e5a33b', '#3fb68b', '#d96ba8', '#8e7cf0', '#e36b5b', '#3bb3c3', '#a3b33b', '#c77d3b', '#7b8fa6'];
 
-/** What a webview needs to render in a mode. */
+// ── Icon sets ────────────────────────────────────────────────────────────────
+
+/** Codicon names (https://microsoft.github.io/vscode-codicons/) for each UI slot. */
+export interface IconSet {
+  label: string;
+  component: string;
+  function: string;
+  method: string;
+  heading: string;
+  section: string;
+  index: string;
+  code: string;
+  docs: string;
+  aiLocal: string;
+  aiCloud: string;
+  mode: string;
+  usage: string;
+  actions: string;
+  chat: string;
+  /** Cytoscape node shapes in the dependency graph. */
+  graph: { component: string; module: string };
+}
+
+export const iconSets: Record<IconSetId, IconSet> = {
+  classic: {
+    label: 'Classic', component: 'symbol-class', function: 'symbol-function', method: 'symbol-method', heading: 'symbol-namespace',
+    section: 'symbol-key', index: 'pass-filled', code: 'file-code', docs: 'book', aiLocal: 'vm', aiCloud: 'cloud', mode: 'paintcan',
+    usage: 'graph-line', actions: 'zap', chat: 'comment-discussion', graph: { component: 'round-rectangle', module: 'ellipse' },
+  },
+  terminal: {
+    label: 'Terminal', component: 'terminal', function: 'chevron-right', method: 'dash', heading: 'symbol-string',
+    section: 'debug-stackframe-dot', index: 'check', code: 'code', docs: 'output', aiLocal: 'server', aiCloud: 'cloud', mode: 'terminal-bash',
+    usage: 'pulse', actions: 'run-all', chat: 'terminal', graph: { component: 'rectangle', module: 'rectangle' },
+  },
+  minimal: {
+    label: 'Minimal', component: 'circle-filled', function: 'circle-small-filled', method: 'circle-small', heading: 'dash',
+    section: 'dash', index: 'check', code: 'circle-outline', docs: 'circle-outline', aiLocal: 'circle-large-outline', aiCloud: 'circle-large-outline',
+    mode: 'circle-large-outline', usage: 'dash', actions: 'arrow-right', chat: 'comment', graph: { component: 'ellipse', module: 'ellipse' },
+  },
+  playful: {
+    label: 'Playful', component: 'sparkle', function: 'zap', method: 'star-empty', heading: 'bookmark',
+    section: 'star-empty', index: 'heart', code: 'rocket', docs: 'book', aiLocal: 'hubot', aiCloud: 'cloud', mode: 'sparkle',
+    usage: 'flame', actions: 'rocket', chat: 'sparkle', graph: { component: 'star', module: 'ellipse' },
+  },
+  technical: {
+    label: 'Technical', component: 'symbol-structure', function: 'symbol-operator', method: 'symbol-event', heading: 'symbol-ruler',
+    section: 'symbol-field', index: 'verified', code: 'circuit-board', docs: 'note', aiLocal: 'chip', aiCloud: 'cloud', mode: 'settings-gear',
+    usage: 'dashboard', actions: 'tools', chat: 'debug-console', graph: { component: 'hexagon', module: 'round-rectangle' },
+  },
+  geometric: {
+    label: 'Geometric', component: 'symbol-interface', function: 'triangle-right', method: 'triangle-right', heading: 'primitive-square',
+    section: 'primitive-dot', index: 'pass', code: 'layers', docs: 'symbol-file', aiLocal: 'vm', aiCloud: 'cloud', mode: 'color-mode',
+    usage: 'graph-line', actions: 'layers-active', chat: 'comment-discussion', graph: { component: 'diamond', module: 'round-hexagon' },
+  },
+  pixel: {
+    label: 'Pixel', component: 'primitive-square', function: 'play', method: 'debug-breakpoint-data-unverified', heading: 'star-full',
+    section: 'star-empty', index: 'heart', code: 'symbol-misc', docs: 'book', aiLocal: 'smiley', aiCloud: 'cloud', mode: 'smiley',
+    usage: 'flame', actions: 'play-circle', chat: 'comment', graph: { component: 'rectangle', module: 'octagon' },
+  },
+};
+
+export const iconSetIds = Object.keys(iconSets) as IconSetId[];
+
+// ── Fonts ───────────────────────────────────────────────────────────────────
+
+/** Fonts bundled with the extension (OFL) and selectable as overrides. */
+export const uiFontChoices = ['Inter', 'Poppins', 'Nunito', 'Space Grotesk', 'IBM Plex Sans', 'Fira Sans', 'Source Serif 4', 'Orbitron', 'VT323', 'Press Start 2P'] as const;
+export const codeFontChoices = ['JetBrains Mono', 'Fira Code', 'IBM Plex Mono', 'Space Mono', 'VT323'] as const;
+
+/** Raw appearance settings, as stored by the host. */
 export interface AppearanceState {
   mode: AtlasModeId;
   /** Glow, scanlines and animations; off when the user disables effects. */
   effects: boolean;
+  /** 'mode' = the mode's font, 'editor' = VS Code's font, or a bundled font name. */
+  uiFont?: string;
+  codeFont?: string;
+  /** 'mode' or an icon set id. */
+  iconSet?: string;
+}
+
+/** Fonts and icons after applying the user's overrides to the mode's defaults. */
+export interface ResolvedAppearance {
+  mode: AtlasMode;
+  fonts: { ui: string; mono: string; display: string };
+  fontScale: number;
+  icons: IconSet;
+}
+
+const pixelFonts = new Set(['VT323']);
+
+export function resolveAppearance(state: AppearanceState): ResolvedAppearance {
+  const mode = atlasModes[state.mode] ?? atlasModes.classic;
+  const fontFor = (choice: string | undefined, choices: readonly string[], modeFont: string, editorFont: string, fallback: (f: string) => string) => {
+    if (choice === 'editor') {
+      return editorFont;
+    }
+    return choice && choices.includes(choice) ? fallback(choice) : modeFont;
+  };
+  const ui = fontFor(state.uiFont, uiFontChoices, mode.fonts.ui, systemUi, sans);
+  const monoFont = fontFor(state.codeFont, codeFontChoices, mode.fonts.mono, systemMono, mono);
+  const uiOverridden = Boolean(state.uiFont && state.uiFont !== 'mode');
+  const iconSet = state.iconSet && state.iconSet in iconSets ? state.iconSet as IconSetId : mode.iconSet;
+
+  return {
+    mode,
+    fonts: { ui, mono: monoFont, display: uiOverridden ? ui : mode.fonts.display ?? ui },
+    fontScale: uiOverridden ? (pixelFonts.has(state.uiFont!) ? 1.3 : 1) : mode.fontScale,
+    icons: iconSets[iconSet],
+  };
 }

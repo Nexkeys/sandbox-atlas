@@ -13,6 +13,7 @@ export { CancelledError, type AiCompletionResult, type AiProvider, type AiReadin
 export { UsageLimitError, type DailyUsage } from './ai/usageLimiter';
 
 export * from './features/aiFeatures';
+export { buildChatRequest, type ChatRequest, type ChatTurn } from './features/chat';
 export { buildGraphData } from './features/graphData';
 export { buildProjectMap } from './features/projectMap';
 export type { AiRunResult } from './features/runAiRequest';

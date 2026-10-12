@@ -1,5 +1,6 @@
 import type { SecretStore } from '../platform';
 import { estimateTokens } from '../util/tokens';
+import { parseStreamChunk, SseParser } from './sse';
 import { apiKeySecretName, isOnlineMode, missingApiKeyMessage, providerLabel, type AiConfig, type AiMode } from './aiConfig';
 
 export interface AiChatMessage {
@@ -12,6 +13,8 @@ export interface AiCompletionOptions {
   maxTokens?: number;
   /** Aborts the request, e.g. when the user cancels. */
   signal?: AbortSignal;
+  /** Streams the answer: called with each text fragment as it arrives. */
+  onToken?: (text: string) => void;
 }
 
 export interface AiCompletionResult {
@@ -128,6 +131,7 @@ class OpenAiCompatibleProvider implements AiProvider {
     if (options.signal) {
       signals.push(options.signal);
     }
+    const streaming = typeof options.onToken === 'function';
 
     let response: Response;
     try {
@@ -139,6 +143,7 @@ class OpenAiCompatibleProvider implements AiProvider {
           messages,
           temperature: options.temperature ?? 0.2,
           max_tokens: options.maxTokens,
+          stream: streaming,
         }),
         signal: AbortSignal.any(signals),
       });
@@ -151,25 +156,72 @@ class OpenAiCompatibleProvider implements AiProvider {
       throw new Error(`${this.label} returned HTTP ${response.status} ${response.statusText}. ${body} ${this.troubleshootingHint()}`);
     }
 
-    const data = await response.json() as ChatCompletionResponse;
-    const firstChoice = data.choices?.[0];
-    const content = firstChoice?.message?.content ?? firstChoice?.text;
-    if (typeof content !== 'string' || content.trim().length === 0) {
+    let content: string;
+    let model: string | undefined;
+    let usage: ChatCompletionResponse['usage'];
+    if (streaming && response.body) {
+      ({ content, model, usage } = await this.readStream(response.body, options.onToken!, options.signal));
+    } else {
+      const data = await response.json() as ChatCompletionResponse;
+      const firstChoice = data.choices?.[0];
+      content = firstChoice?.message?.content ?? firstChoice?.text ?? '';
+      model = data.model;
+      usage = data.usage;
+    }
+
+    if (content.trim().length === 0) {
       throw new Error(`${this.label} returned an empty response. Check that model "${this.config.model}" supports chat completions.`);
     }
 
     const promptChars = messages.reduce((total, message) => total + message.content.length, 0);
-    const promptTokens = data.usage?.prompt_tokens ?? estimateTokens(promptChars);
-    const completionTokens = data.usage?.completion_tokens ?? estimateTokens(content.length);
+    const promptTokens = usage?.prompt_tokens ?? estimateTokens(promptChars);
+    const completionTokens = usage?.completion_tokens ?? estimateTokens(content.length);
 
     return {
       content,
-      model: data.model ?? this.config.model,
+      model: model ?? this.config.model,
       provider: this.displayName,
       promptTokens,
       completionTokens,
-      totalTokens: data.usage?.total_tokens ?? promptTokens + completionTokens,
+      totalTokens: usage?.total_tokens ?? promptTokens + completionTokens,
     };
+  }
+
+  private async readStream(
+    body: ReadableStream<Uint8Array>,
+    onToken: (text: string) => void,
+    userSignal: AbortSignal | undefined,
+  ): Promise<{ content: string; model?: string; usage?: ChatCompletionResponse['usage'] }> {
+    let content = '';
+    let model: string | undefined;
+    let usage: ChatCompletionResponse['usage'];
+    const parser = new SseParser((data) => {
+      const chunk = parseStreamChunk(data);
+      model ??= chunk.model;
+      usage = chunk.usage ?? usage;
+      if (chunk.text) {
+        content += chunk.text;
+        onToken(chunk.text);
+      }
+    });
+
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        parser.push(decoder.decode(value, { stream: true }));
+      }
+      parser.flush();
+    } catch (error) {
+      throw this.toError(error, userSignal);
+    } finally {
+      reader.releaseLock();
+    }
+    return { content, model, usage };
   }
 
   private endpoint(route: '/models' | '/chat/completions'): string {

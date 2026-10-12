@@ -1,4 +1,4 @@
-import { atlasModes, classicNodeColors, type AppearanceState, type AtlasMode } from '../../shared/appearance';
+import { classicNodeColors, resolveAppearance, type AppearanceState, type AtlasMode, type ResolvedAppearance } from '../../shared/appearance';
 
 /** Classic mode maps every Atlas token onto VS Code's own theme variables. */
 const classicTokens: Record<string, string> = {
@@ -17,14 +17,15 @@ const classicTokens: Record<string, string> = {
 };
 
 /**
- * Applies a mode to the document: CSS tokens on <body>, plus data attributes that switch effects
- * (glow, scanlines, grid). High-contrast themes always get Classic for accessibility.
- * Returns the mode actually applied.
+ * Applies a mode (plus font / icon overrides) to the document: CSS tokens on <body>, and data
+ * attributes for effects (glow, scanlines, grid), shape and heading case. High-contrast themes
+ * always get Classic for accessibility. Returns what was actually applied.
  */
-export function applyAppearance(state: AppearanceState): AtlasMode {
+export function applyAppearance(state: AppearanceState): ResolvedAppearance {
   const highContrast = document.body.classList.contains('vscode-high-contrast')
     || document.body.classList.contains('vscode-high-contrast-light');
-  const mode = highContrast ? atlasModes.classic : atlasModes[state.mode] ?? atlasModes.classic;
+  const resolved = resolveAppearance(highContrast ? { mode: 'classic', effects: false } : state);
+  const { mode } = resolved;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const effects = state.effects && !reducedMotion;
 
@@ -49,18 +50,21 @@ export function applyAppearance(state: AppearanceState): AtlasMode {
   // <html> (inherited) or on <body>.
   const root = document.body.style;
   Object.entries(tokens).forEach(([name, value]) => root.setProperty(name, value));
-  root.setProperty('--atlas-font-ui', mode.fonts.ui);
-  root.setProperty('--atlas-font-mono', mode.fonts.mono);
-  root.setProperty('--atlas-font-display', mode.fonts.display ?? mode.fonts.ui);
+  root.setProperty('--atlas-font-ui', resolved.fonts.ui);
+  root.setProperty('--atlas-font-mono', resolved.fonts.mono);
+  root.setProperty('--atlas-font-display', resolved.fonts.display);
+  root.setProperty('--atlas-font-scale', String(resolved.fontScale));
   root.setProperty('--atlas-radius', `${mode.radius}px`);
 
   const data = document.body.dataset;
   data.mode = mode.id;
   data.kind = mode.kind;
+  data.shape = mode.shape;
+  data.case = mode.headingCase;
   toggle('glow', effects && mode.effects.glow);
   toggle('scanlines', effects && mode.effects.scanlines);
   toggle('grid', mode.effects.grid);
-  return mode;
+  return resolved;
 }
 
 /** Categorical node colours for the dependency graph in `mode`. */

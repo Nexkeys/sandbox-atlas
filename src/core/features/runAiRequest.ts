@@ -19,6 +19,7 @@ export async function runAiRequest(
   limiter: UsageLimiter,
   dailyRequestLimit: number,
   signal?: AbortSignal,
+  onToken?: (text: string) => void,
 ): Promise<AiRunResult> {
   limiter.assertWithinLimit(provider.mode, dailyRequestLimit);
 
@@ -27,7 +28,7 @@ export async function runAiRequest(
       { role: 'system', content: request.systemPrompt },
       { role: 'user', content: request.userContent },
     ],
-    { maxTokens: request.maxTokens, temperature: request.temperature, signal },
+    { maxTokens: request.maxTokens, temperature: request.temperature, signal, onToken },
   );
   const usage = await limiter.record(completion.totalTokens);
 

@@ -1,6 +1,6 @@
 import cytoscape, { type Core, type ElementDefinition, type LayoutOptions, type NodeSingular, type StylesheetJson } from 'cytoscape';
 import type { GraphData, GraphNode } from '../../core/model';
-import type { AppearanceState, AtlasMode } from '../../shared/appearance';
+import type { AppearanceState, ResolvedAppearance } from '../../shared/appearance';
 import type { GraphToHostMessage, HostToGraphMessage } from '../../shared/graphProtocol';
 import { applyAppearance, nodeColors, token } from '../common/appearance';
 
@@ -60,7 +60,7 @@ let cy: Core | undefined;
 let current: GraphData | undefined;
 let selected: GraphNode | undefined;
 let appearance: AppearanceState = { mode: 'classic', effects: true };
-let mode: AtlasMode = applyAppearance(appearance);
+let resolved: ResolvedAppearance = applyAppearance(appearance);
 const groupColors = new Map<string, string>();
 
 // ── Theme ────────────────────────────────────────────────────────────────────
@@ -93,12 +93,13 @@ function stylesheet(): StylesheetJson {
         'underlay-color': 'data(color)',
         'underlay-opacity': glow ? 0.35 : 0,
         'underlay-padding': glow ? 7 : 0,
+        shape: resolved.icons.graph.module as 'ellipse',
         'underlay-shape': 'ellipse',
         'transition-property': 'opacity',
         'transition-duration': 150,
       },
     },
-    { selector: 'node[kind = "component"]', style: { shape: 'round-rectangle', 'underlay-shape': 'round-rectangle' } },
+    { selector: 'node[kind = "component"]', style: { shape: resolved.icons.graph.component as 'ellipse', 'underlay-shape': 'round-rectangle' } },
     { selector: 'node[?isFocus]', style: { 'border-width': 3, 'border-color': focus } },
     { selector: 'node:selected', style: { 'border-width': 3, 'border-color': focus } },
     {
@@ -121,7 +122,7 @@ function stylesheet(): StylesheetJson {
 /** Applies a mode and restyles the graph in place (no re-layout). */
 function setAppearance(state: AppearanceState): void {
   appearance = state;
-  mode = applyAppearance(state);
+  resolved = applyAppearance(state);
   groupColors.clear();
   cy?.nodes().forEach((node) => {
     node.data('color', colorFor(node.data('group') as string));
@@ -137,7 +138,7 @@ new MutationObserver(() => setAppearance(appearance)).observe(document.body, { a
 
 function colorFor(group: string): string {
   if (!groupColors.has(group)) {
-    const palette = nodeColors(mode);
+    const palette = nodeColors(resolved.mode);
     groupColors.set(group, palette[groupColors.size % palette.length]);
   }
   return groupColors.get(group)!;

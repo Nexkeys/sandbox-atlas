@@ -1,13 +1,16 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as readline from 'node:readline/promises';
 import { parseArgs } from 'util';
+import { chatHelpMarkdown, parseChatInput } from '../shared/chatCommands';
 import {
   AtlasEngine,
   CancelledError,
   FeatureInputError,
   apiKeySecretName,
   aiModes,
+  buildChatRequest,
   buildEditPlanRequest,
   buildGraphData,
   buildImpactAnalysisRequest,
@@ -20,6 +23,7 @@ import {
   type AiReadiness,
   type AiRequest,
   type AiSettings,
+  type ChatTurn,
   type KeyValueStore,
   type Logger,
   type SecretStore,
@@ -43,6 +47,7 @@ Commands:
   docs                    AI: summarize project documentation
   impact <file>           AI: what breaks if <file> changes
   plan <file> "<intent>"  AI: step-by-step edit plan
+  chat [--file FILE]      Interactive AI chat about the codebase (streams answers)
 
 Options:
   --dir DIR               Workspace root (default: current directory)
@@ -73,6 +78,7 @@ async function main(argv: string[]): Promise<number> {
       db: { type: 'string' },
       out: { type: 'string' },
       focus: { type: 'string' },
+      file: { type: 'string' },
       'include-ignored': { type: 'boolean' },
       verbose: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
@@ -158,6 +164,14 @@ async function main(argv: string[]): Promise<number> {
       case 'plan':
         await runAi(buildEditPlanRequest(engine.synthesizer, root, resolveFile(args[0]), requireText(args.slice(1).join(' '), 'intent'), budget));
         break;
+      case 'chat': {
+        const readiness = await engine.createProvider().checkReadiness();
+        if (!readiness.ready) {
+          throw new FeatureInputError(readinessGuidance(readiness, engine.aiConfig()));
+        }
+        await chatLoop(engine, root, values.file ? path.resolve(root, values.file) : undefined);
+        break;
+      }
       default:
         process.stderr.write(`Unknown command "${command}".\n\n${usage}`);
         return 1;
@@ -172,6 +186,80 @@ async function main(argv: string[]): Promise<number> {
   } finally {
     engine.dispose();
   }
+}
+
+/** Interactive chat: free-form questions with codebase context, plus core slash commands. */
+async function chatLoop(engine: AtlasEngine, root: string, focusFile: string | undefined): Promise<void> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const history: ChatTurn[] = [];
+  const write = (text: string) => process.stdout.write(text);
+  let busy: AbortController | undefined;
+  rl.on('SIGINT', () => {
+    if (busy) {
+      busy.abort();
+    } else {
+      rl.close();
+    }
+  });
+
+  const focusLabel = focusFile ? ` · focus: ${path.relative(root, focusFile)}` : '';
+  write(`Atlas Chat · ${engine.createProvider().displayName}${focusLabel}\n`);
+  write('Ask anything about this codebase. /help for commands, /exit to quit, Ctrl+C stops an answer.\n\n');
+
+  for (;;) {
+    let line: string;
+    try {
+      line = (await rl.question('you › ')).trim();
+    } catch {
+      break; // stdin closed
+    }
+    if (!line) {
+      continue;
+    }
+    if (line === '/exit' || line === '/quit') {
+      break;
+    }
+
+    const input = parseChatInput(line);
+    const budget = engine.aiConfig().contextTokenBudget;
+    busy = new AbortController();
+    try {
+      if (input.kind === 'command' && input.name === 'help') {
+        write(`${chatHelpMarkdown()}\n- \`/exit\` — leave the chat\n\n`);
+      } else if (input.kind === 'command' && input.name === 'clear') {
+        history.length = 0;
+        write('Started a new conversation.\n\n');
+      } else if (input.kind === 'command' && input.name === 'map') {
+        write(`${buildProjectMap(engine.store, root)}\n`);
+      } else if (input.kind === 'command' && input.name === 'scan') {
+        const result = await engine.indexer.index(root);
+        write(`Indexed ${result.totalFiles} files (${result.filesReparsed} re-parsed).\n\n`);
+      } else if (input.kind === 'command' && ['trace', 'docs', 'impact'].includes(input.name)) {
+        const target = input.args ? path.resolve(root, input.args) : focusFile;
+        const request = input.name === 'trace'
+          ? buildTraceFeatureRequest(engine.synthesizer, root, requireText(input.args, 'feature'), budget)
+          : input.name === 'docs'
+            ? buildSummarizeDocsRequest(engine.synthesizer, root, budget)
+            : buildImpactAnalysisRequest(engine.synthesizer, root, target ?? requireText('', 'file'), budget);
+        write('atlas › ');
+        await engine.runAi(request, busy.signal, write);
+        write('\n\n');
+      } else if (input.kind === 'ask') {
+        const request = buildChatRequest(engine.synthesizer, root, input.text, history, budget, focusFile);
+        write('atlas › ');
+        const { completion } = await engine.chat(request, write, busy.signal);
+        write(`\n\x1b[2m(${completion.totalTokens} tokens · ${request.contextLabel})\x1b[0m\n\n`);
+        history.push({ role: 'user', content: input.text }, { role: 'assistant', content: completion.content });
+      } else {
+        write('That command is available in the VS Code chat. Type /help for CLI commands.\n\n');
+      }
+    } catch (error) {
+      write(error instanceof CancelledError ? '\n(stopped)\n\n' : `\n${describeError(error)}\n\n`);
+    } finally {
+      busy = undefined;
+    }
+  }
+  rl.close();
 }
 
 /** Turns a readiness failure into copy-paste next steps for the terminal. */

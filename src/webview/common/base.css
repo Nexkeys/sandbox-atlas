@@ -1,3 +1,5 @@
+@import './fonts.css';
+
 /*
  * Shared foundation for every Sandbox Atlas webview. All colours come from --atlas-* tokens,
  * which appearance.ts sets per mode (Classic maps them onto VS Code's theme variables).
@@ -20,7 +22,7 @@ body {
   background-attachment: fixed;
   color: var(--atlas-text);
   font-family: var(--atlas-font-ui);
-  font-size: var(--vscode-font-size, 13px);
+  font-size: calc(var(--vscode-font-size, 13px) * var(--atlas-font-scale, 1));
   transition: background-color 200ms ease, color 200ms ease;
 }
 
@@ -121,6 +123,57 @@ body[data-grid] {
     linear-gradient(color-mix(in srgb, var(--atlas-border) 20%, transparent) 1px, transparent 1px),
     linear-gradient(90deg, color-mix(in srgb, var(--atlas-border) 20%, transparent) 1px, transparent 1px);
   background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+}
+
+/* ── Shapes: each mode's corner and border language ──────────────────────── */
+
+body[data-shape='pill'] button,
+body[data-shape='pill'] input,
+body[data-shape='pill'] select {
+  border-radius: 999px;
+}
+
+body[data-shape='sharp'] button,
+body[data-shape='sharp'] input,
+body[data-shape='sharp'] select,
+body[data-shape='sharp'] .surface {
+  border-radius: 0;
+}
+
+/* Cyberpunk: cut corners. */
+body[data-shape='angular'] button,
+body[data-shape='angular'] .surface {
+  border-radius: 0;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+body[data-shape='angular'] button {
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+
+/* Arcade: chunky pixel borders with a hard drop shadow. */
+body[data-shape='pixel'] button,
+body[data-shape='pixel'] input,
+body[data-shape='pixel'] select,
+body[data-shape='pixel'] .surface {
+  border-width: 3px;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--atlas-border) 80%, black);
+}
+
+body[data-shape='pixel'] button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--atlas-border) 80%, black);
+}
+
+/* Terminal-style modes: upper-case headings and buttons. */
+body[data-case='upper'] h1,
+body[data-case='upper'] h2,
+body[data-case='upper'] h3,
+body[data-case='upper'] button,
+body[data-case='upper'] .heading-case {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 @media (prefers-reduced-motion: reduce) {

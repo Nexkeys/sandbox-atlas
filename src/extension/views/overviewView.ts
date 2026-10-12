@@ -66,6 +66,7 @@ export class OverviewProvider implements vscode.TreeDataProvider<OverviewItem>, 
 
     const config = engine.aiConfig();
     const usage = engine.usage.getToday();
+    const icons = this.session.appearance.resolved.icons;
     const limited = isOnlineMode(config.mode) && config.dailyRequestLimit > 0;
 
     const items: OverviewItem[] = [
@@ -77,12 +78,12 @@ export class OverviewProvider implements vscode.TreeDataProvider<OverviewItem>, 
         tooltip: `${totals.code} code files, ${totals.docs} docs${lastScan ? `\nLast scan: ${new Date(lastScan).toLocaleString()}` : ''}`,
         command: { command: 'sandboxAtlas.refreshAtlas', title: 'Refresh Atlas' },
       },
-      { label: 'Code', description: `${totals.code} files`, icon: 'file-code' },
-      { label: 'Docs', description: `${totals.docs} files`, icon: 'book' },
+      { label: 'Code', description: `${totals.code} files`, icon: icons.code },
+      { label: 'Docs', description: `${totals.docs} files`, icon: icons.docs },
       {
         label: 'AI',
         description: engine.createProvider(config).displayName,
-        icon: isOnlineMode(config.mode) ? 'cloud' : 'vm',
+        icon: isOnlineMode(config.mode) ? icons.aiCloud : icons.aiLocal,
         tooltip: 'Click to change the AI provider',
         command: { command: 'sandboxAtlas.selectAiProvider', title: 'Select AI Provider' },
       },
@@ -90,13 +91,13 @@ export class OverviewProvider implements vscode.TreeDataProvider<OverviewItem>, 
         label: 'Mode',
         description: atlasModes[this.session.appearance.state.mode].label,
         icon: atlasModes[this.session.appearance.state.mode].icon,
-        tooltip: 'Click to change how Sandbox Atlas looks',
-        command: { command: 'sandboxAtlas.selectMode', title: 'Select Mode' },
+        tooltip: 'Click to change the mode, fonts, icons and effects',
+        command: { command: 'sandboxAtlas.customizeAppearance', title: 'Customize Appearance' },
       },
       {
         label: 'Today',
         description: `${usage.requests}${limited ? ` / ${config.dailyRequestLimit}` : ''} requests · ${formatTokens(usage.tokens)} tokens`,
-        icon: limited && usage.requests >= config.dailyRequestLimit ? 'warning' : 'graph-line',
+        icon: limited && usage.requests >= config.dailyRequestLimit ? 'warning' : icons.usage,
         tooltip: limited ? 'Daily request limit for online providers (sandboxAtlas.ai.dailyRequestLimit).' : 'Offline usage is not limited.',
       },
     ];
@@ -113,7 +114,7 @@ export class OverviewProvider implements vscode.TreeDataProvider<OverviewItem>, 
 
     items.push({
       label: 'Quick actions',
-      icon: 'zap',
+      icon: icons.actions,
       children: [
         action('Trace a Feature', 'search', 'sandboxAtlas.traceFeature'),
         action('Dependency Graph', 'type-hierarchy', 'sandboxAtlas.showGraph'),

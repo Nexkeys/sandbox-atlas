@@ -57,9 +57,15 @@ suite('Sandbox Atlas extension', () => {
     await appearance.update('mode', undefined, vscode.ConfigurationTarget.Global);
   });
 
-  test('contributes the seven matching colour themes', () => {
-    const themes = vscode.extensions.getExtension(extensionId)!.packageJSON.contributes.themes as Array<{ label: string }>;
-    assert.deepStrictEqual(themes.map((theme) => theme.label.replace('Sandbox Atlas ', '')), ['Vibe', 'Hacker', 'Soft', 'Midnight', 'Sunset', 'Blueprint', 'Zen']);
+  test('contributes fourteen matching colour themes', () => {
+    const themes = vscode.extensions.getExtension(extensionId)!.packageJSON.contributes.themes as Array<{ label: string; path: string }>;
+    assert.strictEqual(themes.length, 14);
+    assert.ok(themes.some((theme) => theme.label === 'Sandbox Atlas Cyberpunk'));
+  });
+
+  test('chat view opens from its command', async () => {
+    await vscode.commands.executeCommand('sandboxAtlas.openChat');
+    await vscode.commands.executeCommand('sandboxAtlas.askAboutFile', vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, 'src', 'greet.ts'));
   });
 
   test('dependency graph panel opens', async () => {

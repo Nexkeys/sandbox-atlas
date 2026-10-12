@@ -3,6 +3,31 @@
 All notable changes to Sandbox Atlas are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-10-12
+
+### Added
+- **Atlas Chat**, a sidebar chat (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd>):
+  - Ask questions in plain English, using the local index as context.
+  - Answers stream in, with a Stop button.
+  - The open file is attached automatically, and the conversation is kept per workspace.
+  - Slash commands with autocomplete: `/trace`, `/impact`, `/plan`, `/docs`, `/map`, `/graph`,
+    `/scan`, `/mode`, `/setup`, `/clear`, `/help`.
+  - **Ask Atlas About This File** in the explorer, editor and Atlas Map context menus.
+- **`atlas chat`**: the same streaming chat in the terminal.
+- **Streaming** for every AI feature (OpenAI-compatible server-sent events).
+- **7 new modes**: Retro Terminal, Synthwave, Solar, Groove, Arctic, Cyberpunk and Arcade, for 15
+  in total, each with a matching colour theme (14 themes).
+- Modes now change **fonts, icons and shapes**, not just colours:
+  - 14 bundled OFL fonts.
+  - 7 icon sets for the sidebar and status bar, plus matching graph node shapes.
+  - Rounded, pill, sharp, cut-corner and pixel panel styles.
+  - Upper-case headings in terminal modes.
+- **Customize Appearance**: pick a mode, interface font, code font, icon set and effects, with live
+  preview.
+
+### Fixed
+- Markdown files in the Atlas Map showed folder icons.
+
 ## [0.1.0] — 2026-10-12
 
 First public release.
